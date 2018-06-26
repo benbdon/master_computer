@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="AreaExternal">
+</Property><Property Name="Solution File" Value="C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\AreaExternal.sln">
+</Property><Property Name="Date" Value="Friday, December 04, 2015">
+</Property><Property Name="Time" Value="11:07:52 AM">
+</Property><Property Name="Log Number" Value="4">
+</Property></Properties><Event ErrorLevel="0" Project="AreaExternal" Source="AreaExternal.vcproj" Description="Converting project file 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\AreaExternal.vcproj'.">
+</Event><Event ErrorLevel="1" Project="AreaExternal" Source="AreaExternal.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="AreaExternal" Source="AreaExternal.vcproj" Description="MSB8012: $(TargetPath) ('C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\.\Release\AreaExternal.exe') does not match the Linker's OutputFile property value '.\Release/AreaExternal.exe' ('C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Release/AreaExternal.exe') in project configuration 'Release|Win32'. This may cause your project to build incorrectly. To correct this, please make sure that $(TargetPath) property value matches the value specified in %(Link.OutputFile).">
+</Event><Event ErrorLevel="1" Project="AreaExternal" Source="AreaExternal.vcproj" Description="MSB8012: $(TargetPath) ('C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\.\Debug\AreaExternal.exe') does not match the Linker's OutputFile property value '.\Debug/AreaExternal.exe' ('C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug/AreaExternal.exe') in project configuration 'Debug|Win32'. This may cause your project to build incorrectly. To correct this, please make sure that $(TargetPath) property value matches the value specified in %(Link.OutputFile).">
+</Event><Event ErrorLevel="0" Project="AreaExternal" Source="AreaExternal.vcproj" Description="Done converting to new project file 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\AreaExternal.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="AreaExternal" Source="AreaExternal.vcproj" Description="Converted">
+</Event></UpgradeLog>

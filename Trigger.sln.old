@@ -1,0 +1,86 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AreaExternal", "AreaExternal.vcproj", "{B9C8C8C7-83B5-47DB-BB15-9B725DC88C6F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AreaFreeRun", "AreaFreeRun.vcproj", "{56D007CD-468C-41DC-8A2B-E8087AA495ED}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AreaGrabberControl", "AreaGrabberControl.vcproj", "{E317EB33-0EB3-46C3-BEB1-A38A65DE760A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AreaSoftware", "AreaSoftware.vcproj", "{63E929F9-72BA-422A-8002-7CA5B5001C6C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineFreeRunImg", "LineFreeRunImg.vcproj", "{A91FF91C-9BE3-4E60-8406-65D6C602C87A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineGatedAsyncTriggerLine", "LineGatedAsyncTriggerLine.vcproj", "{7C38C02A-F322-4A5F-979C-83747BE3DEE6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineGatedGrabberControlledLine", "LineGatedGrabberControlledLine.vcproj", "{4F608522-45C1-4031-8BB6-8DC4A9B12E96}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineGrabberControlledLine", "LineGrabberControlledLine.vcproj", "{24F821E9-1402-4FC5-A642-DEF295B8868C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineStartTriggerImg", "LineStartTriggerImg.vcproj", "{E283E71D-0EB1-495E-B4F1-44AC0E1196A2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineStartTriggerLine", "LineStartTriggerLine.vcproj", "{BE482B01-65A1-42CE-BBF7-14C8F8111FFB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineTriggerGatedImg", "LineTriggerGatedImg.vcproj", "{E3355013-5028-4B05-AB85-9955C407292B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LineTriggerGatedMultiBufferImg", "LineTriggerGatedMultiBufferImg.vcproj", "{AB466115-F7ED-4347-B67F-9CDE9EC3DD9F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B9C8C8C7-83B5-47DB-BB15-9B725DC88C6F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B9C8C8C7-83B5-47DB-BB15-9B725DC88C6F}.Debug|Win32.Build.0 = Debug|Win32
+		{B9C8C8C7-83B5-47DB-BB15-9B725DC88C6F}.Release|Win32.ActiveCfg = Release|Win32
+		{B9C8C8C7-83B5-47DB-BB15-9B725DC88C6F}.Release|Win32.Build.0 = Release|Win32
+		{56D007CD-468C-41DC-8A2B-E8087AA495ED}.Debug|Win32.ActiveCfg = Debug|Win32
+		{56D007CD-468C-41DC-8A2B-E8087AA495ED}.Debug|Win32.Build.0 = Debug|Win32
+		{56D007CD-468C-41DC-8A2B-E8087AA495ED}.Release|Win32.ActiveCfg = Release|Win32
+		{56D007CD-468C-41DC-8A2B-E8087AA495ED}.Release|Win32.Build.0 = Release|Win32
+		{E317EB33-0EB3-46C3-BEB1-A38A65DE760A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E317EB33-0EB3-46C3-BEB1-A38A65DE760A}.Debug|Win32.Build.0 = Debug|Win32
+		{E317EB33-0EB3-46C3-BEB1-A38A65DE760A}.Release|Win32.ActiveCfg = Release|Win32
+		{E317EB33-0EB3-46C3-BEB1-A38A65DE760A}.Release|Win32.Build.0 = Release|Win32
+		{63E929F9-72BA-422A-8002-7CA5B5001C6C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{63E929F9-72BA-422A-8002-7CA5B5001C6C}.Debug|Win32.Build.0 = Debug|Win32
+		{63E929F9-72BA-422A-8002-7CA5B5001C6C}.Release|Win32.ActiveCfg = Release|Win32
+		{63E929F9-72BA-422A-8002-7CA5B5001C6C}.Release|Win32.Build.0 = Release|Win32
+		{A91FF91C-9BE3-4E60-8406-65D6C602C87A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A91FF91C-9BE3-4E60-8406-65D6C602C87A}.Debug|Win32.Build.0 = Debug|Win32
+		{A91FF91C-9BE3-4E60-8406-65D6C602C87A}.Release|Win32.ActiveCfg = Release|Win32
+		{A91FF91C-9BE3-4E60-8406-65D6C602C87A}.Release|Win32.Build.0 = Release|Win32
+		{7C38C02A-F322-4A5F-979C-83747BE3DEE6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7C38C02A-F322-4A5F-979C-83747BE3DEE6}.Debug|Win32.Build.0 = Debug|Win32
+		{7C38C02A-F322-4A5F-979C-83747BE3DEE6}.Release|Win32.ActiveCfg = Release|Win32
+		{7C38C02A-F322-4A5F-979C-83747BE3DEE6}.Release|Win32.Build.0 = Release|Win32
+		{4F608522-45C1-4031-8BB6-8DC4A9B12E96}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4F608522-45C1-4031-8BB6-8DC4A9B12E96}.Debug|Win32.Build.0 = Debug|Win32
+		{4F608522-45C1-4031-8BB6-8DC4A9B12E96}.Release|Win32.ActiveCfg = Release|Win32
+		{4F608522-45C1-4031-8BB6-8DC4A9B12E96}.Release|Win32.Build.0 = Release|Win32
+		{24F821E9-1402-4FC5-A642-DEF295B8868C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{24F821E9-1402-4FC5-A642-DEF295B8868C}.Debug|Win32.Build.0 = Debug|Win32
+		{24F821E9-1402-4FC5-A642-DEF295B8868C}.Release|Win32.ActiveCfg = Release|Win32
+		{24F821E9-1402-4FC5-A642-DEF295B8868C}.Release|Win32.Build.0 = Release|Win32
+		{E283E71D-0EB1-495E-B4F1-44AC0E1196A2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E283E71D-0EB1-495E-B4F1-44AC0E1196A2}.Debug|Win32.Build.0 = Debug|Win32
+		{E283E71D-0EB1-495E-B4F1-44AC0E1196A2}.Release|Win32.ActiveCfg = Release|Win32
+		{E283E71D-0EB1-495E-B4F1-44AC0E1196A2}.Release|Win32.Build.0 = Release|Win32
+		{BE482B01-65A1-42CE-BBF7-14C8F8111FFB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BE482B01-65A1-42CE-BBF7-14C8F8111FFB}.Debug|Win32.Build.0 = Debug|Win32
+		{BE482B01-65A1-42CE-BBF7-14C8F8111FFB}.Release|Win32.ActiveCfg = Release|Win32
+		{BE482B01-65A1-42CE-BBF7-14C8F8111FFB}.Release|Win32.Build.0 = Release|Win32
+		{E3355013-5028-4B05-AB85-9955C407292B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E3355013-5028-4B05-AB85-9955C407292B}.Debug|Win32.Build.0 = Debug|Win32
+		{E3355013-5028-4B05-AB85-9955C407292B}.Release|Win32.ActiveCfg = Release|Win32
+		{E3355013-5028-4B05-AB85-9955C407292B}.Release|Win32.Build.0 = Release|Win32
+		{AB466115-F7ED-4347-B67F-9CDE9EC3DD9F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AB466115-F7ED-4347-B67F-9CDE9EC3DD9F}.Debug|Win32.Build.0 = Debug|Win32
+		{AB466115-F7ED-4347-B67F-9CDE9EC3DD9F}.Release|Win32.ActiveCfg = Release|Win32
+		{AB466115-F7ED-4347-B67F-9CDE9EC3DD9F}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

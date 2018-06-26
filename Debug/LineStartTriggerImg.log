@@ -1,0 +1,36 @@
+﻿Build started 12/2/2015 2:29:34 PM.
+     1>Project "C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\LineStartTriggerImg.vcxproj" on node 3 (rebuild target(s)).
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : The process cannot access the file 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\vc100.idb' because it is being used by another process.
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : The process cannot access the file 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\vc100.pdb' because it is being used by another process.
+     1>InitializeBuildStatus:
+         Creating ".\Debug\LineStartTriggerImg.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I"C:\Program Files\SiliconSoftware\Runtime5.1\Include" /I..\..\include /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _VC80_UPGRADE=0x0600 /D _MBCS /Gm /EHsc /RTC1 /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo".\Debug/" /Fd".\Debug/vc100.pdb" /Gd /TP /analyze- /errorReport:prompt LineStartTriggerImg.cpp
+         LineStartTriggerImg.cpp
+     1>c:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(23): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _read. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\io.h(313) : see declaration of 'read'
+     1>c:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(29): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _read. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\io.h(313) : see declaration of 'read'
+     1>c:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(53): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _read. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\io.h(313) : see declaration of 'read'
+       ManifestResourceCompile:
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo".\Debug\LineStartTriggerImg.exe.embed.manifest.res" .\Debug\LineStartTriggerImg_manifest.rc 
+       Link:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:".\Debug/LineStartTriggerImg.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files\SiliconSoftware\Runtime5.1\Lib\visualc" fglib5.lib display_lib.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:".\Debug\LineStartTriggerImg.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:".\Debug/LineStartTriggerImg.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE:NO /IMPLIB:".\Debug\LineStartTriggerImg.lib" /MACHINE:X86 .\Debug\LineStartTriggerImg.exe.embed.manifest.res
+         .\Debug/LineStartTriggerImg.obj
+       Manifest:
+         Deleting file ".\Debug\LineStartTriggerImg.exe.embed.manifest".
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:".\Debug\LineStartTriggerImg.exe.embed.manifest" /manifest .\Debug\LineStartTriggerImg.exe.intermediate.manifest
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo".\Debug\LineStartTriggerImg.exe.embed.manifest.res" .\Debug\LineStartTriggerImg_manifest.rc 
+       LinkEmbedManifest:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:".\Debug/LineStartTriggerImg.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Program Files\SiliconSoftware\Runtime5.1\Lib\visualc" fglib5.lib display_lib.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:".\Debug\LineStartTriggerImg.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:".\Debug/LineStartTriggerImg.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE:NO /IMPLIB:".\Debug\LineStartTriggerImg.lib" /MACHINE:X86 .\Debug\LineStartTriggerImg.exe.embed.manifest.res
+         .\Debug/LineStartTriggerImg.obj
+     1>FileTracker : error FTK1011: could not create the new file tracking log file: C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\link.read.1.tlog. The file exists.
+         
+         
+         
+     1>Done Building Project "C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\LineStartTriggerImg.vcxproj" (rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:04.89

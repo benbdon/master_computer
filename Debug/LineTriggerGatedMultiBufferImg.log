@@ -1,0 +1,27 @@
+﻿Build started 12/2/2015 2:29:30 PM.
+     1>Project "C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\LineTriggerGatedMultiBufferImg.vcxproj" on node 2 (rebuild target(s)).
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : Access to the path 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\AreaFreeRun.pdb' is denied.
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : Access to the path 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\AreaGrabberControl.exe.intermediate.manifest' is denied.
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : Access to the path 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\LineFreeRunImg.pdb' is denied.
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : Access to the path 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\LineStartTriggerImg.exe.intermediate.manifest' is denied.
+     1>C:\Program Files\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppClean.targets(74,5): warning : Access to the path 'C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\LineStartTriggerLine.exe.intermediate.manifest' is denied.
+     1>InitializeBuildStatus:
+         Creating ".\Debug\LineTriggerGatedMultiBufferImg.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I"C:\Program Files\SiliconSoftware\Runtime5.1\Include" /I..\..\include /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _VC80_UPGRADE=0x0600 /D _MBCS /Gm /EHsc /RTC1 /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo".\Debug/" /Fd".\Debug/vc100.pdb" /Gd /TP /analyze- /errorReport:prompt LineTriggerGatedMultiBufferImg.cpp
+         LineTriggerGatedMultiBufferImg.cpp
+     1>c:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(23): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _read. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\io.h(313) : see declaration of 'read'
+     1>c:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(29): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _read. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\io.h(313) : see declaration of 'read'
+     1>c:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(53): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C++ conformant name: _read. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\io.h(313) : see declaration of 'read'
+     1>FileTracker : error FTK1011: could not create the new file tracking log file: C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\Debug\CL.read.1.tlog. The file exists.
+         
+         
+         
+     1>Done Building Project "C:\Program Files\SiliconSoftware\Runtime5.1\SDKExamples\Functionality\Operation_mode\LineTriggerGatedMultiBufferImg.vcxproj" (rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:03.29

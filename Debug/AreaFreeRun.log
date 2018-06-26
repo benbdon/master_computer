@@ -1,0 +1,8 @@
+﻿  AreaFreeRun_TrackCam_TestingFile.cpp
+d:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(23): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _read. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17134.0\ucrt\corecrt_io.h(523): note: see declaration of 'read'
+d:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(29): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _read. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17134.0\ucrt\corecrt_io.h(523): note: see declaration of 'read'
+d:\program files\siliconsoftware\runtime5.1\sdkexamples\include\board_and_dll_chooser.h(53): warning C4996: 'read': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _read. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17134.0\ucrt\corecrt_io.h(523): note: see declaration of 'read'
+d:\program files\siliconsoftware\runtime5.1\sdkexamples\functionality\operation_mode\areafreerun_trackcam_testingfile.cpp(41): fatal error C1083: Cannot open include file: 'opencv2/core/core.hpp': No such file or directory
