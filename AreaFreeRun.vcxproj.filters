@@ -2,16 +2,16 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Quellcodedateien">
-      <UniqueIdentifier>{6d153276-f7f9-4af8-9604-4a3cf40cac41}</UniqueIdentifier>
+      <UniqueIdentifier>{b98a20ab-5b03-46c6-a890-df2c14dfc809}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
     </Filter>
     <Filter Include="Header-Dateien">
-      <UniqueIdentifier>{7c5ecd77-fd65-44f1-be6f-ff34efc99ce0}</UniqueIdentifier>
+      <UniqueIdentifier>{380bb796-d8f2-41d5-a87c-b5bfdfd27e83}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AreaFreeRun_TrackCam_TestingFile.cpp">
+    <ClCompile Include="AreaFreeRun.cpp">
       <Filter>Quellcodedateien</Filter>
     </ClCompile>
   </ItemGroup>
