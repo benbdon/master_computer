@@ -1,0 +1,12 @@
+How To Build pylon Samples
+==========================
+
+This set of samples includes solution files and project files for
+Microsoft Visual Studio 2005.
+
+1. Copy the Samples\C++ folder to a working folder of your choice.
+   Make sure that the folder is not under \Program Files and
+   that you have the required rights to write to that folder.
+2. Navigate to the folder you created in the previous step.
+3. For each camera interface you want to use open the appropriate 
+   solution file, and build the solution configuration of your choice.

@@ -476,7 +476,7 @@ void HomeNoRead(HANDLE m_hSerialCommGRBL, char GCODEmessage[]){
 	//printf(test.c_str());
 }
 
-//Sends DOD Generator to specified location. Coordinats are relative to machine home posiiton, center of PPOD should be around X110 Y-210
+//Sends DOD Generator to specified location. Coordinats are relative to machine home position, center of PPOD should be around X110 Y-210
 void PositionAbsolute(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, int Ypos){
 	//printf("debugging....");
 	
