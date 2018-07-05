@@ -11,14 +11,22 @@
 #define ComPortGRBL     "COM3"         // Serial communication port - neccessary to add L in front for wide character
 #define sleep_time  1000
 
-#include <iostream>
-#include <sstream>      // std::stringbuf
-#include <string>       // std::string
-#include <time.h>		// Sleep(milliseconds)
+
 
 // UDP communication includes - must be before include windows.h
 #include <winsock2.h>
 #include <Ws2tcpip.h>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>      // std::stringbuf
+#include <string>       // std::string
+#include <time.h>		// Sleep(milliseconds)
+#include <windows.h>
+
+// Necessary for UDP - WinSock
+#define WIN32_LEAN_AND_MEAN
+#pragma comment(lib, "Ws2_32.lib")   // Link with ws2_32.lib
 
 using namespace std;
 
@@ -229,8 +237,8 @@ void WriteSerialPort(HANDLE m_hSerialComm, char message[]) {
 	// Code adopted from: http://stackoverflow.com/questions/9955236/append-to-the-end-of-a-char-array-in-c
 	char temp1[] = "\n";
 	char * pszBuf = new char[std::strlen(message) + std::strlen(temp1) + 1];
-	std::strcpy(pszBuf, message);
-	std::strcat(pszBuf, temp1);
+	strcpy(pszBuf, message);
+	strcat(pszBuf, temp1);
 
 	// Size of the buffer pszBuf ("message\r\n")
 	DWORD dwSize = (unsigned)strlen(pszBuf);
@@ -441,6 +449,226 @@ int main(int argc, char* argv[], char* envp[]) {
 
 	// Configure serial port
 	m_hSerialCommGRBL = ConfigureSerialPortGRBL(m_hSerialCommGRBL, m_pszPortNameGRBL);
-	Sleep(sleep_time);
+
 	CloseSerialPort(m_hSerialCommGRBL);
+
+	// =================================================================================================================
+	// Display each command-line argument
+	// =================================================================================================================
+	int count;
+
+	cout << "Command-line arguments:\n";
+
+	for (count = 0; count < argc; count++) {
+		cout << " argv[" << count << "]   " << argv[count] << "\n";
+	}
+	cout << endl;
+
+	// =====================================================================================================================
+	// Local Variables
+	// =====================================================================================================================
+
+	// RunFlag variable to continue running tests or stop
+	int RunFlag = 1;
+
+	int iLast = 0;
+	bool MemSet = false;
+
+	// Initialize serial and UDP commands
+	char GCODEmessage[150];
+	//char message[150];
+	//char UDPmessage[150];
+	string TestingParamsRead;
+
+	//Default DOD position
+	int defX = -112;
+	int defY = -185;
+
+	int camX = defX - 50;
+	int camY = defY + 60;
+
+//	char filename[150];
+//	char filepath[150];
+
+	// Used for comparing which IP address and port recvfrom received
+	//char *CorrectIP;
+	//u_short CorrectPort;
+
+	// Create a string for reading lines in text file
+	string line;
+
+	// Variable for counting the number of lines in text file
+	int LinesInTextFile = 0;
+
+	// Variable for counting the number of comments in text file
+	int CommentsInTextFile = 0;
+
+	// Variable for counting the number of lines read in text file
+	int LinesRead = 0;
+
+	// Variable for first character read in line (to determine if comments)
+	char FirstChar;
+
+	// =================================================================================================================
+	//Initilize DOD gantry
+	// =================================================================================================================
+	printf("setting home.\r\n");
+
+	memset(&GCODEmessage[0], 0, sizeof(GCODEmessage));
+	//sprintf(GCODEmessage,"G10 P0 L20 X0 Y0 Z0");
+	sprintf(GCODEmessage, "$H");
+	WriteSerialPort(m_hSerialCommGRBL, GCODEmessage);
+
+	string test = ReadSerialPort(m_hSerialCommGRBL);
+	test.append("\r\n");
+	printf(test.c_str());
+
+	//Move DOD to default location
+	printf("Moving to default location.\r\n");
+	PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, defX, defY);
+
+	// =================================================================================================================
+	// Check last four characters of argv[1] to ensure if a .txt file was provided
+	// =================================================================================================================
+	string ext = "";
+	for (int i = strlen(argv[1]) - 1; i > strlen(argv[1]) - 5; i--) {
+		ext += (argv[1])[i];
+	}
+
+
+
+	// =================================================================================================================
+	// Text file provided
+	// =================================================================================================================
+	if (ext == "txt.") {  //backwards .txt
+
+		printf("First parameter is a filename.\r\n");
+
+
+		// =============================================================================================================
+		// Count the number of lines in text file
+		// =============================================================================================================
+
+		// Use argv[1] for filename
+		ifstream myfile(argv[1]);
+
+		// Count lines
+		if (myfile.is_open()) {
+			while (getline(myfile, line)) {
+
+				// Increment line counter
+				LinesInTextFile += 1;
+
+				// Check to see if first character is for comments (#)				
+				sscanf(line.c_str(), "%c", &FirstChar);
+				if (FirstChar == 35) {
+					// Increment tests counter
+					CommentsInTextFile += 1;
+				}
+			}
+		}
+		else {
+			cout << "Unable to open file.";
+		}
+
+		// Close file
+		myfile.close();
+
+		printf("  Lines in text file: %d\r\n", LinesInTextFile);
+		printf("  Number of tests to perform: %d\r\n", (LinesInTextFile - CommentsInTextFile));
+		printf("\r\n\n============================================================================\r\n\n");
+
+
+
+		// =============================================================================================================
+		// Read lines in text file
+		// =============================================================================================================
+
+		// Use argv[1] for filename
+		ifstream myFile(argv[1]);
+
+		// Open text file
+		if (myFile.is_open()) {
+
+			// Continue reading lines until have read the last line
+			while (LinesRead < LinesInTextFile) {
+
+				// =====================================================================================================
+				// Read next line, ignoring comments
+				// =====================================================================================================
+				getline(myFile, line);
+				LinesRead += 1;
+
+				// Scan line for first character
+				sscanf(line.c_str(), "%c", &FirstChar);
+
+				// Check to see if first character is for comments (#)
+				while (FirstChar == '#') {
+
+					// Read next line
+					getline(myFile, line);
+					LinesRead += 1;
+
+					// Scan line for first character
+					sscanf(line.c_str(), "%c", &FirstChar);
+				}
+
+
+
+				// =====================================================================================================
+				// Scan line read from text file into local variables for current testing parameters
+				// =====================================================================================================
+
+				// Local variables to store line from text file into
+				int FREQ = 0, VERT_AMPL = 0, HORIZ_AMPL = 0, PHASE_OFFSET = 0, SAVEDSIGNAL = 0, FPS_Side = 0, NUMIMAGES_Side = 0, INTEGER_MULTIPLE = 0, PULSETIME = 0,
+					PPOD_RESET = 0, XPOS = 0, YPOS = 0, CAM_MOVE = 0, HORIZ_AMPL_X = 0, HORIZ_AMPL_Y = 0, VERT_ALPHA = 0, HORIZ_ALPHA_X = 0, HORIZ_ALPHA_Y = 0;
+				char IDENTIFIER = 0;
+				float DELAYTIME = 0;
+
+				// Scan line for first character
+				sscanf(line.c_str(), "%c", &FirstChar);
+
+				// PPOD Saved Signal - [IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
+				if (FirstChar == 'S') {
+					//sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d", &IDENTIFIER, &SAVEDSIGNAL, &FREQ, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET);
+					sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d", &IDENTIFIER, &SAVEDSIGNAL, &FREQ, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
+
+					printf("\n[IDENTIFIER, SAVEDSIGNAL: %c, %d\r\n", IDENTIFIER, SAVEDSIGNAL);
+					printf("FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d, %d\r\n", FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
+					printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
+					printf("PPOD_RESET: %d\r\n", PPOD_RESET);
+					printf("[XPOS, YPOS]: %d, %d\r\n", XPOS, YPOS);
+					printf("CAM_MOVE: %d\r\n", CAM_MOVE);
+				}
+				// PPOD Equations - IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL, PHASE_OFFSET, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, XPOS, YPOS]
+				else if (FirstChar == 'E') {
+					//sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d", &IDENTIFIER, &FREQ, &VERT_AMPL, &HORIZ_AMPL, &PHASE_OFFSET, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &XPOS, &YPOS, &CAM_MOVE);
+
+					sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d",
+						&IDENTIFIER, &FREQ, &VERT_AMPL, &HORIZ_AMPL_X, &HORIZ_AMPL_Y, &VERT_ALPHA, &HORIZ_ALPHA_X, &HORIZ_ALPHA_Y,
+						&PHASE_OFFSET, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
+
+					printf("\n[IDENTIFIER: %c\r\n", IDENTIFIER);
+					//printf("FREQ, VERT_AMPL, HORIZ_AMPL, PHASE_OFFSET: %d, %d, %d, %d\r\n", FREQ, VERT_AMPL, HORIZ_AMPL, PHASE_OFFSET);
+					printf("FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET: %d, %d, %d, %d, %d, %d, %d, %d\r\n", FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET);
+					printf("FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d\r\n", FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
+					printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
+					printf("PPOD_RESET: %d\r\n", PPOD_RESET);
+					printf("[XPOS, YPOS]: %d, %d\r\n", XPOS, YPOS);
+					printf("CAM_MOVE: %d\r\n", CAM_MOVE);
+				}
+
+
+
+				// =================================================================================================================
+				// Moce DOD to specified location
+				// =================================================================================================================
+				int Xdrop = defX + XPOS;
+				int Ydrop = defY + YPOS;
+
+				printf("Moving to (%d, %d).\r\n", XPOS, YPOS);
+				PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, Xdrop, Ydrop);
+			}
+		}
+	}
 }
