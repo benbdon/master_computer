@@ -1,0 +1,20 @@
+# Set of testing parameters will take the form of either: (1) PPOD Saved Signal or (2) # PPOD 6 Equations
+#
+# (1) PPOD Saved Signal
+# IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, # DELAYTIME, PPOD_RESET, X_Position, Y_Position, Camera_Move
+#    -> S, 2, 26, 26, 26, 1, 900, 0.005, 1, -10, 10 1
+# (2) PPOD Equations
+# IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, 
+# VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET, FPS_Side, 
+# NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, 
+# CAM_MOVE, XPOS, YPOSPULSETIME, 
+#
+#DELAYTIME, PPOD_RESET, 
+# X_Position, Y_Position, Camera_Move
+#    -> E, 22, 12, 2, 3, 100, 0, 0, 180, 32, 32, 2, 900, 0.005, 1, 1, -10, 10
+#
+#E, 36, 16, 0, 0, 100, 0, 0, 0, 400, 80, 40, 730, 0.03301, 0, 0, 0, -15
+#E, 36, 16, 0, 0, 100, 0, 0, 0, 400, 80, 40, 730, 0.03302, 0, 0, -15, 0
+E, 36, 16, 0, 0, 100, 0, 0, 0, 400, 200, 40, 730, 0.03303, 0, 0, 15, 0
+E, 36, 16, 0, 0, 100, 0, 0, 0, 400, 400, 40, 720, 0.03304, 0, 0, 0, 15
+E, 36, 16, 0, 0, 100, 0, 0, 0, 400, 4000, 40, 720, 0.03305, 1, 1, 0, 15

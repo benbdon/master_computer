@@ -171,13 +171,13 @@ std::string ReadSerialPort(HANDLE m_hSerialComm) {
 		printf("Error in SetCommMask to read an event.\r\n");
 	}
 	else {
-		//printf("A \r\n");
+		printf("A \r\n");
 	}
 
 	// Call the WaitCommEvent function to wait for the event to occur
 	if (WaitCommEvent(m_hSerialComm, &dwEventMask, NULL))
 	{
-		//printf("WaitCommEvent successfully called.\r\n");
+		printf("WaitCommEvent successfully called.\r\n");
 		char szBuf;
 		DWORD dwIncommingReadSize;
 		DWORD dwSize = 0;
@@ -366,6 +366,7 @@ HANDLE ConfigureSerialPortGRBL(HANDLE m_hSerialComm, const LPCTSTR m_pszPortName
 	string returnedMessage = ReadSerialPort(m_hSerialComm);
 	returnedMessage.append("\r\n");
 	printf(returnedMessage.c_str());
+	
 
 	return m_hSerialComm;
 
@@ -429,7 +430,7 @@ void PositionRelative(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, i
 	sprintf(GCODEmessage, "G91 G0 X%d Y%d", Xpos, Ypos);
 	WriteSerialPort(m_hSerialCommGRBL, GCODEmessage);
 
-	//string test = ReadSerialPort(m_hSerialCommGRBL);
+	string test = ReadSerialPort(m_hSerialCommGRBL);
 	//test.append("\r\n");
 	//printf(test.c_str());
 }
@@ -450,7 +451,7 @@ int main(int argc, char* argv[], char* envp[]) {
 	// Configure serial port
 	m_hSerialCommGRBL = ConfigureSerialPortGRBL(m_hSerialCommGRBL, m_pszPortNameGRBL);
 
-	CloseSerialPort(m_hSerialCommGRBL);
+
 
 	// =================================================================================================================
 	// Display each command-line argument
@@ -671,4 +672,5 @@ int main(int argc, char* argv[], char* envp[]) {
 			}
 		}
 	}
+	CloseSerialPort(m_hSerialCommGRBL);
 }
