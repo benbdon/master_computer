@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="grbl_move.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\C++\Grab\Grab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
