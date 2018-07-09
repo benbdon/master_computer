@@ -435,7 +435,7 @@ void PositionRelative(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, i
 	//printf(test.c_str());
 }
 
-int main(int argc, char* argv[], char* envp[]) {
+/*int main(int argc, char* argv[], char* envp[]) {
 
 
 	// =====================================================================================================================
@@ -674,3 +674,4 @@ int main(int argc, char* argv[], char* envp[]) {
 	}
 	CloseSerialPort(m_hSerialCommGRBL);
 }
+*/
