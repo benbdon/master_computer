@@ -45,28 +45,32 @@ using namespace Pylon;
 // Namespace for using usb camera 
 using namespace Basler_UsbCameraParams;
 
+//=======================
+//MAY NEED OPENCV includes HERE
+//=======================
 
+//======================
+//May need something about UNICODE HERE
+/*#ifndef UNICODE
+#define UNICODE
+#endif */
+//======================
 
 #define ERROR_THRESHOLD		0.2		// Error threshold needed from PPOD after changing signal before will create droplet and start video capturing
 
-#define ComPortPIC		"\\\\.\\COM13"			// Serial communication port - neccessary to add L in front for wide character
-#define ComPortParams	"COM6"			// Serial communication port - neccessary to add L in front for wide character
+#define ComPortPIC		"\\\\.\\COM4"			// Serial communication port - neccessary to add L in front for wide character
 
-#define ComPortGRBL     "COM3"         // Serial communication port - neccessary to add L in front for wide character
+#define ComPortGRBL     "COM3"         // Serial communication port - maybe neccessary to add L in front for wide character
 
-#define SERVERA   "129.105.69.140"  // server IP address (Machine A - this one)
+#define SERVERA   "129.105.69.211"  // server IP address (Machine A - this one)
 #define PORTA      9090             // port on which to listen for incoming data (Machine A)
 #define PORTE      4500             // port on which to listen for incoming data (PPOD)
-#define SERVERB   "129.105.69.220"  // server IP address (Machine B - Linux/Mikrotron)
+#define SERVERB   "129.105.69.255"  // server IP address (Machine B - Linux/Mikrotron)
 #define PORTB      51717            // port on which to send data (Machine B - capture_sequence_avi.c)
 #define PORTD      51718            // port on which to send data (Machine B - Matlab)
-#define SERVERC   "129.105.69.253"  // server IP address (Machine C - PPOD)
+#define SERVERC   "129.105.69.174"  // server IP address (Machine C - PPOD)
 #define PORTC      9091             // port on which to send data (Machine C)
 #define UDPBUFLEN  512              // max length of buffer
-
-#ifndef UNICODE
-#define UNICODE
-#endif
 
 // Necessary for UDP - WinSock
 #define WIN32_LEAN_AND_MEAN
@@ -74,7 +78,11 @@ using namespace Basler_UsbCameraParams;
 
 // Namespace for using cout.
 using namespace std;
+
+//============may need the namespace thing below======
 //using namespace cv;
+//================================
+
 
 // Number of images to be grabbed.
 static const uint32_t c_countOfImagesToGrab = 5;
@@ -219,7 +227,7 @@ std::string ReadSerialPort(HANDLE m_hSerialComm) {
 		printf("Error in SetCommMask to read an event.\r\n");
 	}
 	else {
-		printf("A \r\n");
+		//printf("A \r\n");
 	}
 
 	// Call the WaitCommEvent function to wait for the event to occur
@@ -483,7 +491,7 @@ void PositionRelative(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, i
 	//printf(test.c_str());
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[], char* envp[])
 {
 
 	// =====================================================================================================================
