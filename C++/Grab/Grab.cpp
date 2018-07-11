@@ -84,9 +84,6 @@ using namespace std;
 //================================
 
 
-// Number of images to be grabbed.
-static const uint32_t c_countOfImagesToGrab = 5;
-
 /* HANDLE ConfigureSerialPort(HANDLE m_hSerialComm, const wchar_t* m_pszPortName)
 
 Before starting any communication on a serial port, we must first open a connection, in this case in non-overlapped mode.
@@ -521,6 +518,12 @@ int main(int argc, char* argv[], char* envp[])
 
 	// Configure serial port
 	m_hSerialCommGRBL = ConfigureSerialPortGRBL(m_hSerialCommGRBL, m_pszPortNameGRBL);
+
+	// =====================================================================================================================
+	// TrackCam (Basler) properties
+	// =====================================================================================================================
+	// Number of images to be grabbed.
+	static const uint32_t c_countOfImagesToGrab = 5;
 
 	// =================================================================================================================
 	// Display each command-line argument
