@@ -818,32 +818,49 @@ int main(int argc, char* argv[], char* envp[])
 				// =====================================================================================================
 				// Scan line read from text file into local variables for current testing parameters
 				// =====================================================================================================
+				// 1. IDENTIFIER - S & E - S for saved signal, E for PPOD equation
+				// 2. SAVED SIGNAL - Just S - Determines which saved signal is run
+				// 3. FREQ - S & E - PPOD vibration frequency in HZ
+				// 4. VERT_AMPL - Just E - Z axis accelerations of PPOD table in m/s^2
+				// 5. HORIZ_AMPL_X - Just E - X axis acceleration of PPOD table in m/s^2
+				// 6. HORIZ_AMPL_Y - Just E - Y axis acceleration of PPOD table in m/s^2
+				// 7. VERT_ALPHA - Just E - Amplitude of frequency rotating surface about Z axis
+				// 8. HORIZ_ALPHA_X - Just E - Amplitude of the frequency rotating PPOD about gantry x axis
+				// 9. HORIZ_ALPHA_Y - Just E - Amplitude of frequency roating PPOD about gantry y axis
+				// 10. PHASE_OFFSET - Just E - Decouples horizontal and vertical frequencies for adjusting bouncing behavior (0 - 360)
+				// 11. FPS_Side - S & E - Frame rate of Mikrotron (side) camera in frames per second
+				// 12. NUMIMAGES_Side - S & E - Number of frames the side camera will capture in a given experiment
+				// 13. INTEGER_MULTIPLE - S & E - Determines the frame rate for the TrackCam (overhead)
+				// 14. PULSETIME - S & E - Pulse time for piezeo in droplet generator in microseconds (680-900)
+				// 15. DELAYTIME - S & E - Delay from when cameras start capture to when the droplet is made in seconds (0.000 - 0.0500)
+				// 16. PPOD_RESET - S & E - Use to turn off PPOD after a given experiment completes
+				// 17. Camera_Move - S & E - (1) Moves the cam out of the cam frame (0) doesn't move the camera
+				// 18. XPOS - S & E - Location of the droplet in x axis relative to the center of the bath (-15 - 15)
+				// 19. YPOS - S & E - Location of the droplet in y axis relative to the center of the bath (-15 - 15)
 
 				// Local variables to store line from text file into
-				int FREQ = 0, VERT_AMPL = 0, HORIZ_AMPL = 0, PHASE_OFFSET = 0, SAVEDSIGNAL = 0, FPS_Side = 0, NUMIMAGES_Side = 0, INTEGER_MULTIPLE = 0, PULSETIME = 0,
-					PPOD_RESET = 0, XPOS = 0, YPOS = 0, CAM_MOVE = 0, HORIZ_AMPL_X = 0, HORIZ_AMPL_Y = 0, VERT_ALPHA = 0, HORIZ_ALPHA_X = 0, HORIZ_ALPHA_Y = 0;
 				char IDENTIFIER = 0;
+				int SAVEDSIGNAL = 0, FREQ = 0, VERT_AMPL = 0, HORIZ_AMPL_X = 0, HORIZ_AMPL_Y = 0, HORIZ_AMPL = 0, VERT_ALPHA = 0, HORIZ_ALPHA_X = 0, HORIZ_ALPHA_Y = 0, PHASE_OFFSET = 0, FPS_Side = 0, NUMIMAGES_Side = 0, INTEGER_MULTIPLE = 0, PULSETIME = 0;	
 				float DELAYTIME = 0;
+				int PPOD_RESET = 0, CAM_MOVE = 0, XPOS = 0, YPOS = 0;
 
 				// Scan line for first character
 				sscanf(line.c_str(), "%c", &FirstChar);
 
 				// PPOD Saved Signal - [IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
 				if (FirstChar == 'S') {
-					//sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d", &IDENTIFIER, &SAVEDSIGNAL, &FREQ, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET);
 					sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d", &IDENTIFIER, &SAVEDSIGNAL, &FREQ, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
 
 					printf("\n[IDENTIFIER, SAVEDSIGNAL: %c, %d\r\n", IDENTIFIER, SAVEDSIGNAL);
 					printf("FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d, %d\r\n", FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
 					printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
 					printf("PPOD_RESET: %d\r\n", PPOD_RESET);
-					printf("[XPOS, YPOS]: %d, %d\r\n", XPOS, YPOS);
 					printf("CAM_MOVE: %d\r\n", CAM_MOVE);
+					printf("[XPOS, YPOS]: %d, %d\r\n", XPOS, YPOS);
+					
 				}
-				// PPOD Equations - IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL, PHASE_OFFSET, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, XPOS, YPOS]
+				// PPOD Equations - [IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
 				else if (FirstChar == 'E') {
-					//sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d", &IDENTIFIER, &FREQ, &VERT_AMPL, &HORIZ_AMPL, &PHASE_OFFSET, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &XPOS, &YPOS, &CAM_MOVE);
-
 					sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d",
 						&IDENTIFIER, &FREQ, &VERT_AMPL, &HORIZ_AMPL_X, &HORIZ_AMPL_Y, &VERT_ALPHA, &HORIZ_ALPHA_X, &HORIZ_ALPHA_Y,
 						&PHASE_OFFSET, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
