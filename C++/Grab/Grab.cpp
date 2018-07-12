@@ -537,7 +537,7 @@ int main(int argc, char* argv[], char* envp[])
 	}
 	cout << endl;
 	
-	/*
+	
 	// =====================================================================================================================
 	// Initialize Winsock, create Receiver/Sender sockets, and bind the sockets
 	// =====================================================================================================================
@@ -657,7 +657,6 @@ int main(int argc, char* argv[], char* envp[])
 		wprintf(L"bind failed with error %d\n", WSAGetLastError());
 		return 1;
 	}
-*/
 
 	// =====================================================================================================================
 	// Local Variables
@@ -671,8 +670,8 @@ int main(int argc, char* argv[], char* envp[])
 
 	// Initialize serial and UDP commands
 	char GCODEmessage[150];
-	//char message[150];
-	//char UDPmessage[150];
+	char message[150];
+	char UDPmessage[150];
 	string TestingParamsRead;
 
 	//Default DOD position
@@ -870,7 +869,7 @@ int main(int argc, char* argv[], char* envp[])
 				printf("Moving to (%d, %d).\r\n", XPOS, YPOS);
 				PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, Xdrop, Ydrop);
 
-				/*
+				
 				// =================================================================================================================
 				// Send datagram to Machine B for current test parameters
 				// =================================================================================================================
@@ -895,7 +894,6 @@ int main(int argc, char* argv[], char* envp[])
 					WSACleanup();
 					return 1;
 				}
-				*/
 			}
 		}
 	}
