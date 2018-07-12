@@ -490,491 +490,491 @@ void PositionRelative(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, i
 
 int main(int argc, char* argv[], char* envp[])
 {
+	//Before using any pylon methods, the pylon runtime must be initialized. 
+	int exitCode = 0;
+	PylonInitialize();
 
-	// =====================================================================================================================
-	// Configuration of serial port: COM13 (Lower USB port on front panel of computer) to talk to PIC
-	// =====================================================================================================================
-
-	
-	// Create empty handle to serial port
-	HANDLE m_hSerialCommPIC = { 0 };
-
-	// Serial communication using port COM13
-	const LPCTSTR m_pszPortNamePIC = ComPortPIC;
-
-	// Configure serial port
-	m_hSerialCommPIC = ConfigureSerialPort(m_hSerialCommPIC, m_pszPortNamePIC);
-	
-
-	// =====================================================================================================================
-	// Configuration of serial port: COM9 (Lower USB port on back next to ethernet) to talk to Arduino
-	// =====================================================================================================================
-
-	// Create empty handle to serial port
-	HANDLE m_hSerialCommGRBL = { 0 };
-
-	// Serial communication using port COM13
-	const LPCTSTR m_pszPortNameGRBL = ComPortGRBL;
-
-	// Configure serial port
-	m_hSerialCommGRBL = ConfigureSerialPortGRBL(m_hSerialCommGRBL, m_pszPortNameGRBL);
 
-	// =====================================================================================================================
-	// TrackCam (Basler) properties
-	// =====================================================================================================================
-	// Number of images to be grabbed.
-	static const uint32_t c_countOfImagesToGrab = 5;
+	try {
+		// =====================================================================================================================
+		// Configuration of serial port: COM13 (Lower USB port on front panel of computer) to talk to PIC
+		// =====================================================================================================================
 
-	// =================================================================================================================
-	// Display each command-line argument
-	// =================================================================================================================
-	int count;
 
-	cout << "Command-line arguments:\n";
+		// Create empty handle to serial port
+		HANDLE m_hSerialCommPIC = { 0 };
 
-	for (count = 0; count < argc; count++) {
-		cout << " argv[" << count << "]   " << argv[count] << "\n";
-	}
-	cout << endl;
-	
-	
-	// =====================================================================================================================
-	// Initialize Winsock, create Receiver/Sender sockets, and bind the sockets
-	// =====================================================================================================================
-	WSADATA wsaData;
-	SOCKET RecvSocket, RecvSocketPPOD;
-	SOCKET SendSocket = INVALID_SOCKET;
+		// Serial communication using port COM13
+		const LPCTSTR m_pszPortNamePIC = ComPortPIC;
 
-	// Create structures for Machine A, Machine B, and Machine C
-	sockaddr_in AddrMachineA, AddrMachineAPPOD, AddrMachineB, AddrMachineBMatlab, AddrMachineC;
-	sockaddr_in SenderAddr;
+		// Configure serial port
+		m_hSerialCommPIC = ConfigureSerialPort(m_hSerialCommPIC, m_pszPortNamePIC);
 
-	unsigned short PortA = PORTA;		// This machine (TrackCam) - Linux
-	unsigned short PortE = PORTE;		// This machine (TrackCam) - PPOD
-	unsigned short PortB = PORTB;		// Linux (Miktron) - capture_sequence_avi.c
-	unsigned short PortD = PORTD;		// Linux (Miktron) - MATLAB
-	unsigned short PortC = PORTC;		// PPOD Controller
-	char RecvBuf[UDPBUFLEN], RecvBufPPOD[UDPBUFLEN];
-	char SendBuf[UDPBUFLEN];
-	int iResult = 0;
-	int BufLen = UDPBUFLEN;
-	int SenderAddrSize = sizeof(AddrMachineB);
-	int SenderAddrSizeA = sizeof(AddrMachineA);
 
+		// =====================================================================================================================
+		// Configuration of serial port: COM9 (Lower USB port on back next to ethernet) to talk to Arduino
+		// =====================================================================================================================
 
-	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != NO_ERROR) {
-		wprintf(L"WSAStartup failed with error %d\n", iResult);
-		return 1;
-	}
+		// Create empty handle to serial port
+		HANDLE m_hSerialCommGRBL = { 0 };
 
+		// Serial communication using port COM13
+		const LPCTSTR m_pszPortNameGRBL = ComPortGRBL;
 
-	// Create a sender socket for sending datagrams
-	SendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (SendSocket == INVALID_SOCKET) {
-		wprintf(L"socket failed with error: %ld\n", WSAGetLastError());
-		WSACleanup();
-		return 1;
-	}
+		// Configure serial port
+		m_hSerialCommGRBL = ConfigureSerialPortGRBL(m_hSerialCommGRBL, m_pszPortNameGRBL);
 
+		// =====================================================================================================================
+		// TrackCam (Basler) properties
+		// =====================================================================================================================
+		// Number of images to be grabbed.
+		static const uint32_t c_countOfImagesToGrab = 5;
 
-	// Create a receiver socket to receive datagrams
-	RecvSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (RecvSocket == INVALID_SOCKET) {
-		wprintf(L"socket failed with error %d\n", WSAGetLastError());
-		return 1;
-	}
+		// =================================================================================================================
+		// Display each command-line argument
+		// =================================================================================================================
+		int count;
 
-	struct timeval tv;
+		cout << "Command-line arguments:\n";
 
-	tv.tv_sec = 120;
-	tv.tv_usec = 0;
+		for (count = 0; count < argc; count++) {
+			cout << " argv[" << count << "]   " << argv[count] << "\n";
+		}
+		cout << endl;
 
-	setsockopt(RecvSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
-	//17-06-02 By Mengjiao
-	RecvSocketPPOD = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (RecvSocketPPOD == INVALID_SOCKET) {
-		wprintf(L"socketppod failed with error %d\n", WSAGetLastError());
-		return 1;
-	}
+		// =====================================================================================================================
+		// Initialize Winsock, create Receiver/Sender sockets, and bind the sockets
+		// =====================================================================================================================
+		WSADATA wsaData;
+		SOCKET RecvSocket, RecvSocketPPOD;
+		SOCKET SendSocket = INVALID_SOCKET;
 
-	struct timeval tvppod;
+		// Create structures for Machine A, Machine B, and Machine C
+		sockaddr_in AddrMachineA, AddrMachineAPPOD, AddrMachineB, AddrMachineBMatlab, AddrMachineC;
+		sockaddr_in SenderAddr;
 
-	tvppod.tv_sec = 120;
-	tvppod.tv_usec = 0;
+		unsigned short PortA = PORTA;		// This machine (TrackCam) - Linux
+		unsigned short PortE = PORTE;		// This machine (TrackCam) - PPOD
+		unsigned short PortB = PORTB;		// Linux (Miktron) - capture_sequence_avi.c
+		unsigned short PortD = PORTD;		// Linux (Miktron) - MATLAB
+		unsigned short PortC = PORTC;		// PPOD Controller
+		char RecvBuf[UDPBUFLEN], RecvBufPPOD[UDPBUFLEN];
+		char SendBuf[UDPBUFLEN];
+		int iResult = 0;
+		int BufLen = UDPBUFLEN;
+		int SenderAddrSize = sizeof(AddrMachineB);
+		int SenderAddrSizeA = sizeof(AddrMachineA);
 
-	setsockopt(RecvSocketPPOD, SOL_SOCKET, SO_RCVTIMEO, (char *)&tvppod, sizeof(struct timeval));
 
+		// Initialize Winsock
+		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (iResult != NO_ERROR) {
+			wprintf(L"WSAStartup failed with error %d\n", iResult);
+			return 1;
+		}
 
-	// Set up the AddrMachineB structure with the IP address of the receiver and the specified port
-	memset((char*)&AddrMachineB, 0, sizeof(AddrMachineB));
 
-	AddrMachineB.sin_family = AF_INET;
-	AddrMachineB.sin_port = htons(PortB);
-	AddrMachineB.sin_addr.s_addr = inet_addr(SERVERB);
+		// Create a sender socket for sending datagrams
+		SendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (SendSocket == INVALID_SOCKET) {
+			wprintf(L"socket failed with error: %ld\n", WSAGetLastError());
+			WSACleanup();
+			return 1;
+		}
 
-	// Set up the AddrMachineBMatlab structure with the IP address of the receiver and the specified port
-	memset((char*)&AddrMachineBMatlab, 0, sizeof(AddrMachineBMatlab));
 
-	AddrMachineBMatlab.sin_family = AF_INET;
-	AddrMachineBMatlab.sin_port = htons(PortD);
-	AddrMachineBMatlab.sin_addr.s_addr = inet_addr(SERVERB);
+		// Create a receiver socket to receive datagrams
+		RecvSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (RecvSocket == INVALID_SOCKET) {
+			wprintf(L"socket failed with error %d\n", WSAGetLastError());
+			return 1;
+		}
 
+		struct timeval tv;
 
-	// Set up the AddrMachineC structure with the IP address of the receiver and the specified port
-	memset((char*)&AddrMachineC, 0, sizeof(AddrMachineC));
+		tv.tv_sec = 120;
+		tv.tv_usec = 0;
 
-	AddrMachineC.sin_family = AF_INET;
-	AddrMachineC.sin_port = htons(PortC);
-	AddrMachineC.sin_addr.s_addr = inet_addr(SERVERC);
+		setsockopt(RecvSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
+		//17-06-02 By Mengjiao
+		RecvSocketPPOD = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (RecvSocketPPOD == INVALID_SOCKET) {
+			wprintf(L"socketppod failed with error %d\n", WSAGetLastError());
+			return 1;
+		}
 
-	// Bind the RecvSocket to any address and the specified port
-	memset((char*)&AddrMachineA, 0, sizeof(AddrMachineA));
+		struct timeval tvppod;
 
-	AddrMachineA.sin_family = AF_INET;
-	AddrMachineA.sin_port = htons(PortA);
-	AddrMachineA.sin_addr.s_addr = htonl(INADDR_ANY);
+		tvppod.tv_sec = 120;
+		tvppod.tv_usec = 0;
 
-	iResult = bind(RecvSocket, (SOCKADDR *)& AddrMachineA, sizeof(AddrMachineA));
-	if (iResult != 0) {
-		wprintf(L"bind failed with error %d\n", WSAGetLastError());
-		return 1;
-	}
+		setsockopt(RecvSocketPPOD, SOL_SOCKET, SO_RCVTIMEO, (char *)&tvppod, sizeof(struct timeval));
 
-	//17-06-02 By Mengjiao
-	// Bind the RecvSocket to any address and the specified port
-	memset((char*)&AddrMachineAPPOD, 0, sizeof(AddrMachineAPPOD));
 
-	AddrMachineAPPOD.sin_family = AF_INET;
-	AddrMachineAPPOD.sin_port = htons(PortE);
-	AddrMachineAPPOD.sin_addr.s_addr = htonl(INADDR_ANY);
+		// Set up the AddrMachineB structure with the IP address of the receiver and the specified port
+		memset((char*)&AddrMachineB, 0, sizeof(AddrMachineB));
 
-	iResult = bind(RecvSocketPPOD, (SOCKADDR *)& AddrMachineAPPOD, sizeof(AddrMachineAPPOD));
-	if (iResult != 0) {
-		wprintf(L"bind failed with error %d\n", WSAGetLastError());
-		return 1;
-	}
+		AddrMachineB.sin_family = AF_INET;
+		AddrMachineB.sin_port = htons(PortB);
+		AddrMachineB.sin_addr.s_addr = inet_addr(SERVERB);
 
-	// =====================================================================================================================
-	// Local Variables
-	// =====================================================================================================================
+		// Set up the AddrMachineBMatlab structure with the IP address of the receiver and the specified port
+		memset((char*)&AddrMachineBMatlab, 0, sizeof(AddrMachineBMatlab));
 
-	// RunFlag variable to continue running tests or stop
-	int RunFlag = 1;
+		AddrMachineBMatlab.sin_family = AF_INET;
+		AddrMachineBMatlab.sin_port = htons(PortD);
+		AddrMachineBMatlab.sin_addr.s_addr = inet_addr(SERVERB);
 
-	int iLast = 0;
-	bool MemSet = false;
 
-	// Initialize serial and UDP commands
-	char GCODEmessage[150];
-	char message[150];
-	char UDPmessage[150];
-	string TestingParamsRead;
+		// Set up the AddrMachineC structure with the IP address of the receiver and the specified port
+		memset((char*)&AddrMachineC, 0, sizeof(AddrMachineC));
 
-	//Default DOD position
-	int defX = -112;
-	int defY = -185;
+		AddrMachineC.sin_family = AF_INET;
+		AddrMachineC.sin_port = htons(PortC);
+		AddrMachineC.sin_addr.s_addr = inet_addr(SERVERC);
 
-	int camX = defX - 50;
-	int camY = defY + 60;
 
-	// Define errorThreshold for PPOD after changed signal
-	float errorThreshold = ERROR_THRESHOLD;
+		// Bind the RecvSocket to any address and the specified port
+		memset((char*)&AddrMachineA, 0, sizeof(AddrMachineA));
 
-	//	char filename[150];
-	//	char filepath[150];
+		AddrMachineA.sin_family = AF_INET;
+		AddrMachineA.sin_port = htons(PortA);
+		AddrMachineA.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	// Used for comparing which IP address and port recvfrom received
-	//char *CorrectIP;
-	//u_short CorrectPort;
+		iResult = bind(RecvSocket, (SOCKADDR *)& AddrMachineA, sizeof(AddrMachineA));
+		if (iResult != 0) {
+			wprintf(L"bind failed with error %d\n", WSAGetLastError());
+			return 1;
+		}
 
-	// Create a string for reading lines in text file
-	string line;
+		//17-06-02 By Mengjiao
+		// Bind the RecvSocket to any address and the specified port
+		memset((char*)&AddrMachineAPPOD, 0, sizeof(AddrMachineAPPOD));
 
-	// Variable for counting the number of lines in text file
-	int LinesInTextFile = 0;
+		AddrMachineAPPOD.sin_family = AF_INET;
+		AddrMachineAPPOD.sin_port = htons(PortE);
+		AddrMachineAPPOD.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	// Variable for counting the number of comments in text file
-	int CommentsInTextFile = 0;
+		iResult = bind(RecvSocketPPOD, (SOCKADDR *)& AddrMachineAPPOD, sizeof(AddrMachineAPPOD));
+		if (iResult != 0) {
+			wprintf(L"bind failed with error %d\n", WSAGetLastError());
+			return 1;
+		}
 
-	// Variable for counting the number of lines read in text file
-	int LinesRead = 0;
+		// =====================================================================================================================
+		// Local Variables
+		// =====================================================================================================================
 
-	// Variable for first character read in line (to determine if comments)
-	char FirstChar;
+		// RunFlag variable to continue running tests or stop
+		int RunFlag = 1;
 
-	// =================================================================================================================
-	//Initilize DOD gantry
-	// =================================================================================================================
-	printf("setting home.\r\n");
+		int iLast = 0;
+		bool MemSet = false;
 
-	memset(&GCODEmessage[0], 0, sizeof(GCODEmessage));
-	//sprintf(GCODEmessage,"G10 P0 L20 X0 Y0 Z0");
-	sprintf(GCODEmessage, "$H");
-	WriteSerialPort(m_hSerialCommGRBL, GCODEmessage);
+		// Initialize serial and UDP commands
+		char GCODEmessage[150];
+		char message[150];
+		char UDPmessage[150];
+		string TestingParamsRead;
 
-	string test = ReadSerialPort(m_hSerialCommGRBL);
-	test.append("\r\n");
-	printf(test.c_str());
+		//Default DOD position
+		int defX = -112;
+		int defY = -185;
 
-	//Move DOD to default location
-	printf("Moving to default location.\r\n");
-	PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, defX, defY);
+		int camX = defX - 50;
+		int camY = defY + 60;
 
-	//Sleep(25000);
+		// Define errorThreshold for PPOD after changed signal
+		float errorThreshold = ERROR_THRESHOLD;
 
+		// Create a string for reading lines in text file
+		string line;
 
-	// =================================================================================================================
-	// Check last four characters of argv[1] to ensure if a .txt file was provided
-	// =================================================================================================================
-	string ext = "";
-	for (int i = strlen(argv[1]) - 1; i>strlen(argv[1]) - 5; i--) {
-		ext += (argv[1])[i];
-	}
+		// Variable for counting the number of lines in text file
+		int LinesInTextFile = 0;
 
+		// Variable for counting the number of comments in text file
+		int CommentsInTextFile = 0;
 
+		// Variable for counting the number of lines read in text file
+		int LinesRead = 0;
 
-	// =================================================================================================================
-	// Text file provided
-	// =================================================================================================================
-	if (ext == "txt.") {  //backwards .txt
+		// Variable for first character read in line (to determine if comments)
+		char FirstChar;
 
-		printf("First parameter is a filename.\r\n");
+		// =================================================================================================================
+		//Initilize DOD gantry
+		// =================================================================================================================
+		printf("setting home.\r\n");
 
+		memset(&GCODEmessage[0], 0, sizeof(GCODEmessage));
+		//sprintf(GCODEmessage,"G10 P0 L20 X0 Y0 Z0");
+		sprintf(GCODEmessage, "$H");
+		WriteSerialPort(m_hSerialCommGRBL, GCODEmessage);
 
-		// =============================================================================================================
-		// Count the number of lines in text file
-		// =============================================================================================================
+		string test = ReadSerialPort(m_hSerialCommGRBL);
+		test.append("\r\n");
+		printf(test.c_str());
 
-		// Use argv[1] for filename
-		ifstream myfile(argv[1]);
+		//Move DOD to default location
+		printf("Moving to default location.\r\n");
+		PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, defX, defY);
 
-		// Count lines
-		if (myfile.is_open()) {
-			while (getline(myfile, line)) {
+		// =================================================================================================================
+		// Check last four characters of argv[1] to ensure if a .txt file was provided
+		// =================================================================================================================
+		string ext = "";
+		for (int i = strlen(argv[1]) - 1; i>strlen(argv[1]) - 5; i--) {
+			ext += (argv[1])[i];
+		}
 
-				// Increment line counter
-				LinesInTextFile += 1;
+		// =================================================================================================================
+		// Text file provided
+		// =================================================================================================================
+		if (ext == "txt.") {  //backwards .txt
 
-				// Check to see if first character is for comments (#)				
-				sscanf(line.c_str(), "%c", &FirstChar);
-				if (FirstChar == 35) {
-					// Increment tests counter
-					CommentsInTextFile += 1;
+			printf("First parameter is a filename.\r\n");
+
+
+			// =============================================================================================================
+			// Count the number of lines in text file
+			// =============================================================================================================
+
+			// Use argv[1] for filename
+			ifstream myfile(argv[1]);
+
+			// Count lines
+			if (myfile.is_open()) {
+				while (getline(myfile, line)) {
+
+					// Increment line counter
+					LinesInTextFile += 1;
+
+					// Check to see if first character is for comments (#)				
+					sscanf(line.c_str(), "%c", &FirstChar);
+					if (FirstChar == 35) {
+						// Increment tests counter
+						CommentsInTextFile += 1;
+					}
 				}
 			}
-		}
-		else {
-			cout << "Unable to open file.";
-		}
+			else {
+				cout << "Unable to open file.";
+			}
 
-		// Close file
-		myfile.close();
+			// Close file
+			myfile.close();
 
-		printf("  Lines in text file: %d\r\n", LinesInTextFile);
-		printf("  Number of tests to perform: %d\r\n", (LinesInTextFile - CommentsInTextFile));
-		printf("\r\n\n============================================================================\r\n\n");
-
+			printf("  Lines in text file: %d\r\n", LinesInTextFile);
+			printf("  Number of tests to perform: %d\r\n", (LinesInTextFile - CommentsInTextFile));
+			printf("\r\n\n============================================================================\r\n\n");
 
 
-		// =============================================================================================================
-		// Read lines in text file
-		// =============================================================================================================
 
-		// Use argv[1] for filename
-		ifstream myFile(argv[1]);
+			// =============================================================================================================
+			// Read lines in text file
+			// =============================================================================================================
 
-		// Open text file
-		if (myFile.is_open()) {
+			// Use argv[1] for filename
+			ifstream myFile(argv[1]);
 
-			// Continue reading lines until have read the last line
-			while (LinesRead < LinesInTextFile) {
+			// Open text file
+			if (myFile.is_open()) {
 
-				// =====================================================================================================
-				// Read next line, ignoring comments
-				// =====================================================================================================
-				getline(myFile, line);
-				LinesRead += 1;
+				// Continue reading lines until have read the last line
+				while (LinesRead < LinesInTextFile) {
 
-				// Scan line for first character
-				sscanf(line.c_str(), "%c", &FirstChar);
-
-				// Check to see if first character is for comments (#)
-				while (FirstChar == '#') {
-
-					// Read next line
+					// =====================================================================================================
+					// Read next line, ignoring comments
+					// =====================================================================================================
 					getline(myFile, line);
 					LinesRead += 1;
 
 					// Scan line for first character
 					sscanf(line.c_str(), "%c", &FirstChar);
-				}
+
+					// Check to see if first character is for comments (#)
+					while (FirstChar == '#') {
+
+						// Read next line
+						getline(myFile, line);
+						LinesRead += 1;
+
+						// Scan line for first character
+						sscanf(line.c_str(), "%c", &FirstChar);
+					}
 
 
 
-				// =====================================================================================================
-				// Scan line read from text file into local variables for current testing parameters
-				// =====================================================================================================
-				// 1. IDENTIFIER - S & E - S for saved signal, E for PPOD equation
-				// 2. SAVED SIGNAL - Just S - Determines which saved signal is run
-				// 3. FREQ - S & E - PPOD vibration frequency in HZ
-				// 4. VERT_AMPL - Just E - Z axis accelerations of PPOD table in m/s^2
-				// 5. HORIZ_AMPL_X - Just E - X axis acceleration of PPOD table in m/s^2
-				// 6. HORIZ_AMPL_Y - Just E - Y axis acceleration of PPOD table in m/s^2
-				// 7. VERT_ALPHA - Just E - Amplitude of frequency rotating surface about Z axis
-				// 8. HORIZ_ALPHA_X - Just E - Amplitude of the frequency rotating PPOD about gantry x axis
-				// 9. HORIZ_ALPHA_Y - Just E - Amplitude of frequency roating PPOD about gantry y axis
-				// 10. PHASE_OFFSET - Just E - Decouples horizontal and vertical frequencies for adjusting bouncing behavior (0 - 360)
-				// 11. FPS_Side - S & E - Frame rate of Mikrotron (side) camera in frames per second
-				// 12. NUMIMAGES_Side - S & E - Number of frames the side camera will capture in a given experiment
-				// 13. INTEGER_MULTIPLE - S & E - Determines the frame rate for the TrackCam (overhead)
-				// 14. PULSETIME - S & E - Pulse time for piezeo in droplet generator in microseconds (680-900)
-				// 15. DELAYTIME - S & E - Delay from when cameras start capture to when the droplet is made in seconds (0.000 - 0.0500)
-				// 16. PPOD_RESET - S & E - Use to turn off PPOD after a given experiment completes
-				// 17. Camera_Move - S & E - (1) Moves the cam out of the cam frame (0) doesn't move the camera
-				// 18. XPOS - S & E - Location of the droplet in x axis relative to the center of the bath (-15 - 15)
-				// 19. YPOS - S & E - Location of the droplet in y axis relative to the center of the bath (-15 - 15)
+					// =====================================================================================================
+					// Scan line read from text file into local variables for current testing parameters
+					// =====================================================================================================
+					// 1. IDENTIFIER - S & E - S for saved signal, E for PPOD equation
+					// 2. SAVED SIGNAL - Just S - Determines which saved signal is run
+					// 3. FREQ - S & E - PPOD vibration frequency in HZ
+					// 4. VERT_AMPL - Just E - Z axis accelerations of PPOD table in m/s^2
+					// 5. HORIZ_AMPL_X - Just E - X axis acceleration of PPOD table in m/s^2
+					// 6. HORIZ_AMPL_Y - Just E - Y axis acceleration of PPOD table in m/s^2
+					// 7. VERT_ALPHA - Just E - Amplitude of frequency rotating surface about Z axis
+					// 8. HORIZ_ALPHA_X - Just E - Amplitude of the frequency rotating PPOD about gantry x axis
+					// 9. HORIZ_ALPHA_Y - Just E - Amplitude of frequency roating PPOD about gantry y axis
+					// 10. PHASE_OFFSET - Just E - Decouples horizontal and vertical frequencies for adjusting bouncing behavior (0 - 360)
+					// 11. FPS_Side - S & E - Frame rate of Mikrotron (side) camera in frames per second
+					// 12. NUMIMAGES_Side - S & E - Number of frames the side camera will capture in a given experiment
+					// 13. INTEGER_MULTIPLE - S & E - Determines the frame rate for the TrackCam (overhead)
+					// 14. PULSETIME - S & E - Pulse time for piezeo in droplet generator in microseconds (680-900)
+					// 15. DELAYTIME - S & E - Delay from when cameras start capture to when the droplet is made in seconds (0.000 - 0.0500)
+					// 16. PPOD_RESET - S & E - Use to turn off PPOD after a given experiment completes
+					// 17. Camera_Move - S & E - (1) Moves the cam out of the cam frame (0) doesn't move the camera
+					// 18. XPOS - S & E - Location of the droplet in x axis relative to the center of the bath (-15 - 15)
+					// 19. YPOS - S & E - Location of the droplet in y axis relative to the center of the bath (-15 - 15)
 
-				// Local variables to store line from text file into
-				char IDENTIFIER = 0;
-				int SAVEDSIGNAL = 0, FREQ = 0, VERT_AMPL = 0, HORIZ_AMPL_X = 0, HORIZ_AMPL_Y = 0, HORIZ_AMPL = 0, VERT_ALPHA = 0, HORIZ_ALPHA_X = 0, HORIZ_ALPHA_Y = 0, PHASE_OFFSET = 0, FPS_Side = 0, NUMIMAGES_Side = 0, INTEGER_MULTIPLE = 0, PULSETIME = 0;	
-				float DELAYTIME = 0;
-				int PPOD_RESET = 0, CAM_MOVE = 0, XPOS = 0, YPOS = 0;
+					// Local variables to store line from text file into
+					char IDENTIFIER = 0;
+					int SAVEDSIGNAL = 0, FREQ = 0, VERT_AMPL = 0, HORIZ_AMPL_X = 0, HORIZ_AMPL_Y = 0, HORIZ_AMPL = 0, VERT_ALPHA = 0, HORIZ_ALPHA_X = 0, HORIZ_ALPHA_Y = 0, PHASE_OFFSET = 0, FPS_Side = 0, NUMIMAGES_Side = 0, INTEGER_MULTIPLE = 0, PULSETIME = 0;
+					float DELAYTIME = 0;
+					int PPOD_RESET = 0, CAM_MOVE = 0, XPOS = 0, YPOS = 0;
 
-				// Scan line for first character
-				sscanf(line.c_str(), "%c", &FirstChar);
+					// Scan line for first character
+					sscanf(line.c_str(), "%c", &FirstChar);
 
-				// PPOD Saved Signal - [IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
-				if (FirstChar == 'S') {
-					sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d", &IDENTIFIER, &SAVEDSIGNAL, &FREQ, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
+					// PPOD Saved Signal - [IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
+					if (FirstChar == 'S') {
+						sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d", &IDENTIFIER, &SAVEDSIGNAL, &FREQ, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
 
-					printf("\n[IDENTIFIER, SAVEDSIGNAL: %c, %d\r\n", IDENTIFIER, SAVEDSIGNAL);
-					printf("FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d, %d\r\n", FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
-					printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
-					printf("PPOD_RESET: %d\r\n", PPOD_RESET);
-					printf("CAM_MOVE: %d\r\n", CAM_MOVE);
-					printf("[XPOS, YPOS]: %d, %d\r\n", XPOS, YPOS);
-					
-				}
-				// PPOD Equations - [IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
-				else if (FirstChar == 'E') {
-					sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d",
-						&IDENTIFIER, &FREQ, &VERT_AMPL, &HORIZ_AMPL_X, &HORIZ_AMPL_Y, &VERT_ALPHA, &HORIZ_ALPHA_X, &HORIZ_ALPHA_Y,
-						&PHASE_OFFSET, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
+						printf("\n[IDENTIFIER, SAVEDSIGNAL: %c, %d\r\n", IDENTIFIER, SAVEDSIGNAL);
+						printf("FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d, %d\r\n", FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
+						printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
+						printf("PPOD_RESET: %d\r\n", PPOD_RESET);
+						printf("CAM_MOVE: %d\r\n", CAM_MOVE);
+						printf("[XPOS, YPOS]: %d, %d\r\n", XPOS, YPOS);
 
-					printf("\n[IDENTIFIER: %c\r\n", IDENTIFIER);
-					//printf("FREQ, VERT_AMPL, HORIZ_AMPL, PHASE_OFFSET: %d, %d, %d, %d\r\n", FREQ, VERT_AMPL, HORIZ_AMPL, PHASE_OFFSET);
-					printf("FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET: %d, %d, %d, %d, %d, %d, %d, %d\r\n", FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET);
-					printf("FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d\r\n", FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
-					printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
-					printf("PPOD_RESET: %d\r\n", PPOD_RESET);
-					printf("[XPOS, YPOS]: %d, %d\r\n", XPOS, YPOS);
-					printf("CAM_MOVE: %d\r\n", CAM_MOVE);
-				}
+					}
+					// PPOD Equations - [IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
+					else if (FirstChar == 'E') {
+						sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d",
+							&IDENTIFIER, &FREQ, &VERT_AMPL, &HORIZ_AMPL_X, &HORIZ_AMPL_Y, &VERT_ALPHA, &HORIZ_ALPHA_X, &HORIZ_ALPHA_Y,
+							&PHASE_OFFSET, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
+
+						printf("\n[IDENTIFIER: %c\r\n", IDENTIFIER);
+						//printf("FREQ, VERT_AMPL, HORIZ_AMPL, PHASE_OFFSET: %d, %d, %d, %d\r\n", FREQ, VERT_AMPL, HORIZ_AMPL, PHASE_OFFSET);
+						printf("FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET: %d, %d, %d, %d, %d, %d, %d, %d\r\n", FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET);
+						printf("FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d\r\n", FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
+						printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
+						printf("PPOD_RESET: %d\r\n", PPOD_RESET);
+						printf("[XPOS, YPOS]: %d, %d\r\n", XPOS, YPOS);
+						printf("CAM_MOVE: %d\r\n", CAM_MOVE);
+					}
 
 
 
-				// =================================================================================================================
-				// Move DOD to specified location
-				// =================================================================================================================
-				int Xdrop = defX + XPOS;
-				int Ydrop = defY + YPOS;
+					// =================================================================================================================
+					// Move DOD to specified location
+					// =================================================================================================================
+					int Xdrop = defX + XPOS;
+					int Ydrop = defY + YPOS;
 
-				printf("Moving to (%d, %d).\r\n", XPOS, YPOS);
-				PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, Xdrop, Ydrop);
+					printf("Moving to (%d, %d).\r\n", XPOS, YPOS);
+					PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, Xdrop, Ydrop);
 
-				
-				// =================================================================================================================
-				// Send datagram to Machine B for current test parameters
-				// =================================================================================================================
 
-				wprintf(L"\nSending a datagram to Machine B...Initialization...\n");
+					// =================================================================================================================
+					// Send datagram to Machine B for current test parameters
+					// =================================================================================================================
 
-				// Create message to send
-				memset(&SendBuf[0], 0, sizeof(SendBuf));
-				if (FirstChar == 'S') {
-					sprintf(UDPmessage, "%c, %d, %d, %d, %d, %f, %d", IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, PULSETIME, DELAYTIME);
-				}
-				else if (FirstChar == 'E') {
-					sprintf(UDPmessage, "%c, %d, %d, %d, %d, %d, %d, %d, %f", IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_Y, PHASE_OFFSET, FPS_Side, NUMIMAGES_Side, PULSETIME, DELAYTIME);
-				}
-				strcpy(SendBuf, UDPmessage);
+					wprintf(L"\nSending a datagram to Machine B...Initialization...\n");
 
-				// Send message to Machine B
-				iResult = sendto(SendSocket, SendBuf, BufLen, 0, (SOCKADDR *)& AddrMachineB, sizeof(AddrMachineB));
-				if (iResult == SOCKET_ERROR) {
-					wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
-					closesocket(SendSocket);
-					WSACleanup();
-					return 1;
+					// Create message to send
+					memset(&SendBuf[0], 0, sizeof(SendBuf));
+					if (FirstChar == 'S') {
+						sprintf(UDPmessage, "%c, %d, %d, %d, %d, %f, %d", IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, PULSETIME, DELAYTIME);
+					}
+					else if (FirstChar == 'E') {
+						sprintf(UDPmessage, "%c, %d, %d, %d, %d, %d, %d, %d, %f", IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_Y, PHASE_OFFSET, FPS_Side, NUMIMAGES_Side, PULSETIME, DELAYTIME);
+					}
+					strcpy(SendBuf, UDPmessage);
+
+					// Send message to Machine B
+					iResult = sendto(SendSocket, SendBuf, BufLen, 0, (SOCKADDR *)& AddrMachineB, sizeof(AddrMachineB));
+					if (iResult == SOCKET_ERROR) {
+						wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+						closesocket(SendSocket);
+						WSACleanup();
+						return 1;
+					}
 				}
 			}
+
 		}
-	}
-	CloseSerialPort(m_hSerialCommGRBL);
+		
 
-	// =========================================================
-	// BEN'S CAMERA CODE BEGINS
-    // =========================================================
-		// The exit code of the sample application.
-    int exitCode = 0;
-    // Before using any pylon methods, the pylon runtime must be initialized. 
-    PylonInitialize();
+		// =========================================================
+		// Initialization of Basler camera 
+		// =========================================================
 
-    try
-    {
-        // Create a USB instant camera object with the camera device found first.
-        CBaslerUsbInstantCamera camera( CTlFactory::GetInstance().CreateFirstDevice());
+		// Create a USB instant camera object with the camera device found first.
+		CBaslerUsbInstantCamera overheadCam(CTlFactory::GetInstance().CreateFirstDevice());
 
 		// Open camera
-		camera.Open();
+		overheadCam.Open();
+		fprintf(stdout, "\r\nInit Grabber: ok\n");
 
-        // Print the model name of the camera.
-        cout << "Using device " << camera.GetDeviceInfo().GetModelName() << endl;
-		
+		// =================================================================================================================
+		// Setting the image size and camera format
+		// =================================================================================================================
+		// TODO ADD SOME IMAGE PARAMETERS OR DELETE
+		// Set for the trigger width exposure mode
+		overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth);
+		// Set the exposure overlap time max- the shortest exposure time // we plan to use is 1500 us
+		overheadCam.ExposureOverlapTimeMax.SetValue(1500);
 
+
+		// =================================================================================================================
+		// Memory allocation
+		// =================================================================================================================
 		// The parameter MaxNumBuffer can be used to control the count of buffers
 		// allocated for grabbing. The default value of this parameter is 10.
-		camera.MaxNumBuffer = 10;
+		overheadCam.MaxNumBuffer = 10;
 
+		// =================================================================================================================
+		// Setting the trigger mode for Extern Trigger
+		// =================================================================================================================
 		// Set the acquisition mode to continuous frame
-		camera.AcquisitionMode.SetValue(AcquisitionMode_Continuous);
+		overheadCam.AcquisitionMode.SetValue(AcquisitionMode_Continuous);
 		// Set the mode for the selected trigger
-		camera.TriggerMode.SetValue(TriggerMode_Off);
+		overheadCam.TriggerMode.SetValue(TriggerMode_Off);
 		// Disable the acquisition frame rate parameter (this will disable the camera’s // internal frame rate control and allow you to control the frame rate with // external frame start trigger signals)
-		camera.AcquisitionFrameRateEnable.SetValue(false);
+		overheadCam.AcquisitionFrameRateEnable.SetValue(false);
 		// Select the frame start trigger
-		camera.TriggerSelector.SetValue(TriggerSelector_FrameStart);
+		overheadCam.TriggerSelector.SetValue(TriggerSelector_FrameStart);
 		// Set the mode for the selected trigger
-		camera.TriggerMode.SetValue(TriggerMode_On);
+		overheadCam.TriggerMode.SetValue(TriggerMode_On);
 		// Set the source for the selected trigger
-		camera.TriggerSource.SetValue(TriggerSource_Line1);
+		overheadCam.TriggerSource.SetValue(TriggerSource_Line1);
 		// Set the trigger activation mode to rising edge
-		camera.TriggerActivation.SetValue(TriggerActivation_RisingEdge);
-		// Set for the trigger width exposure mode
-		camera.ExposureMode.SetValue(ExposureMode_TriggerWidth);
-		// Set the exposure overlap time max- the shortest exposure time // we plan to use is 1500 us
-		camera.ExposureOverlapTimeMax.SetValue(1500);
+		overheadCam.TriggerActivation.SetValue(TriggerActivation_RisingEdge);
+
+		// =======================================
+		// Kickoff triggered acquisition & grabbing images from the buffer
+		//=======================================
 		// Prepare for frame acquisition here
-		camera.AcquisitionStart.Execute();
-		
+		overheadCam.AcquisitionStart.Execute();
 		// Start the grabbing of c_countOfImagesToGrab images.
 		// The camera device is parameterized with a default configuration which
 		// sets up free-running continuous acquisition.
-		camera.StartGrabbing(c_countOfImagesToGrab);
+		overheadCam.StartGrabbing(c_countOfImagesToGrab);
 
 		// This smart pointer will receive the grab result data.
 		CGrabResultPtr ptrGrabResult;
 
 		// Camera.StopGrabbing() is called automatically by the RetrieveResult() method
 		// when c_countOfImagesToGrab images have been retrieved.
-		while (camera.IsGrabbing())
+		while (overheadCam.IsGrabbing())
 		{
-			// Wait for an image and then retrieve it. A timeout of 5000 ms is used.
-			camera.RetrieveResult(5000, ptrGrabResult, TimeoutHandling_ThrowException);
+			// Wait for an image and then retrieve it. A timeout of 15000 ms is used.
+			overheadCam.RetrieveResult(15000, ptrGrabResult, TimeoutHandling_ThrowException);
 
 			// Image grabbed successfully?
 			if (ptrGrabResult->GrabSucceeded())
@@ -996,6 +996,39 @@ int main(int argc, char* argv[], char* envp[])
 				cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
 			}
 		}
+
+		// =================================================================================================================
+		// Receive datagram from Machine B to start capturing sequence AVI
+		// =================================================================================================================
+
+		// Call the recvfrom function to receive datagrams on the bound socket.
+		wprintf(L"Receiving datagrams from Machine B...Start Capture...\n");
+
+		memset(&RecvBuf[0], 0, sizeof(RecvBuf));
+		iResult = recvfrom(RecvSocket, RecvBuf, BufLen, 0, (SOCKADDR *)& SenderAddr, &SenderAddrSize);
+		if (iResult == SOCKET_ERROR) {
+			wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+			printf("A\n");
+		}
+
+		while ((strcmp(inet_ntoa(SenderAddr.sin_addr), SERVERB)) || (strcmp(RecvBuf, "Start sequence AVI."))) { // 17-04-17 by Mengjiao
+			iResult = recvfrom(RecvSocket, RecvBuf, BufLen, 0, (SOCKADDR *)& SenderAddr, &SenderAddrSize);
+			if (iResult == SOCKET_ERROR) {
+				wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+				printf("B\n");
+				//break;
+			}
+
+		}
+
+		printf("Received packet from %s: %d\n", inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
+		printf("Data: %s\r\n\n", RecvBuf);
+
+
+
+		//=======================================
+		//Close grbl serial port
+		CloseSerialPort(m_hSerialCommGRBL);
 	}
     catch (const GenericException &e)
     {
@@ -1011,6 +1044,5 @@ int main(int argc, char* argv[], char* envp[])
 
     // Releases all pylon resources. 
     PylonTerminate();  
-
     return exitCode;
 }
