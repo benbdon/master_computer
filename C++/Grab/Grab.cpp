@@ -58,14 +58,14 @@ using namespace Basler_UsbCameraParams;
 
 #define ERROR_THRESHOLD		0.2		// Error threshold needed from PPOD after changing signal before will create droplet and start video capturing
 
-#define ComPortPIC		"\\\\.\\COM4"			// Serial communication port - neccessary to add L in front for wide character
+#define ComPortPIC		"COM4"			// Serial communication port - neccessary to add L in front for wide character
 
 #define ComPortGRBL     "COM3"         // Serial communication port - maybe neccessary to add L in front for wide character
 
 #define SERVERA   "129.105.69.211"  // server IP address (Machine A - this one)
 #define PORTA      9090             // port on which to listen for incoming data (Machine A)
 #define PORTE      4500             // port on which to listen for incoming data (PPOD)
-#define SERVERB   "129.105.69.255"  // server IP address (Machine B - Linux/Mikrotron)
+#define SERVERB   "129.105.69.220"  // server IP address (Machine B - Linux/Mikrotron)
 #define PORTB      51717            // port on which to send data (Machine B - capture_sequence_avi.c)
 #define PORTD      51718            // port on which to send data (Machine B - Matlab)
 #define SERVERC   "129.105.69.174"  // server IP address (Machine C - PPOD)
@@ -551,8 +551,8 @@ int main(int argc, char* argv[], char* envp[])
 		SOCKET SendSocket = INVALID_SOCKET;
 
 		// Create structures for Machine A, Machine B, and Machine C
-		sockaddr_in AddrMachineA, AddrMachineAPPOD, AddrMachineB, AddrMachineBMatlab, AddrMachineC;
-		sockaddr_in SenderAddr;
+		sockaddr_in AddrMachineA, AddrMachineB, AddrMachineC;
+		sockaddr_in AddrMachineAPPOD, SenderAddr, AddrMachineBMatlab; //TODO Doesn't make sense that there are so many addresses.  I would assume 5 tops( 3 PC, PIC, Arduino)
 
 		unsigned short PortA = PORTA;		// This machine (TrackCam) - Linux
 		unsigned short PortE = PORTE;		// This machine (TrackCam) - PPOD
@@ -563,8 +563,8 @@ int main(int argc, char* argv[], char* envp[])
 		char SendBuf[UDPBUFLEN];
 		int iResult = 0;
 		int BufLen = UDPBUFLEN;
-		int SenderAddrSize = sizeof(AddrMachineB);
 		int SenderAddrSizeA = sizeof(AddrMachineA);
+		int SenderAddrSizeB = sizeof(AddrMachineB);
 
 
 		// Initialize Winsock
@@ -641,7 +641,7 @@ int main(int argc, char* argv[], char* envp[])
 
 		AddrMachineA.sin_family = AF_INET;
 		AddrMachineA.sin_port = htons(PortA);
-		AddrMachineA.sin_addr.s_addr = htonl(INADDR_ANY);
+		AddrMachineA.sin_addr.s_addr = htonl(INADDR_ANY); //TODO Seems like we shouldn't be using "ANY ADDRESS", my gut says this shoul be Server A address
 
 		iResult = bind(RecvSocket, (SOCKADDR *)& AddrMachineA, sizeof(AddrMachineA));
 		if (iResult != 0) {
@@ -655,7 +655,7 @@ int main(int argc, char* argv[], char* envp[])
 
 		AddrMachineAPPOD.sin_family = AF_INET;
 		AddrMachineAPPOD.sin_port = htons(PortE);
-		AddrMachineAPPOD.sin_addr.s_addr = htonl(INADDR_ANY);
+		AddrMachineAPPOD.sin_addr.s_addr = htonl(INADDR_ANY); //TODO likewise we shouldn't be using "ANY ADDRESS", my gut says this shoul be Server A address
 
 		iResult = bind(RecvSocketPPOD, (SOCKADDR *)& AddrMachineAPPOD, sizeof(AddrMachineAPPOD));
 		if (iResult != 0) {
@@ -688,6 +688,20 @@ int main(int argc, char* argv[], char* envp[])
 
 		// Define errorThreshold for PPOD after changed signal
 		float errorThreshold = ERROR_THRESHOLD;
+
+		// Define properties for VideoWriter
+		//bool isColor = ISCOLOR;
+		//int fps = VIDEOFPS;
+		//int frameW = WIDTH;
+		//int frameH = HEIGHT;
+		//Size FrameSize = Size(frameW, frameH);
+		//int codec = CV_FOURCC('H', 'F', 'Y', 'U'); 	// Usable: HFYU, MJPG(missing some information) 
+													// Not usable: MPEG, MPG4, YUV8, YUV9, _RGB, 8BPS, DUCK, MRLE, PIMJ, PVW2, RGBT, RLE4, RLE8, RPZA
+		char filename[150];
+		char filepath[150];
+
+		// Initialize PPOD_ERROR to some value
+		float PPOD_ERROR = 10.0;
 
 		// Create a string for reading lines in text file
 		string line;
@@ -811,6 +825,7 @@ int main(int argc, char* argv[], char* envp[])
 					// =====================================================================================================
 					// Scan line read from text file into local variables for current testing parameters
 					// =====================================================================================================
+					
 					// 1. IDENTIFIER - S & E - S for saved signal, E for PPOD equation
 					// 2. SAVED SIGNAL - Just S - Determines which saved signal is run
 					// 3. FREQ - S & E - PPOD vibration frequency in HZ
@@ -904,131 +919,189 @@ int main(int argc, char* argv[], char* envp[])
 						WSACleanup();
 						return 1;
 					}
-				}
-			}
+					// =========================================================
+					// Initialization of Basler camera 
+					// =========================================================
 
-		}
-		
+					// Create a USB instant camera object with the camera device found first.
+					CBaslerUsbInstantCamera overheadCam(CTlFactory::GetInstance().CreateFirstDevice());
 
-		// =========================================================
-		// Initialization of Basler camera 
-		// =========================================================
+					// Open camera
+					overheadCam.Open();
+					fprintf(stdout, "\r\nInit Cam: ok\n");
 
-		// Create a USB instant camera object with the camera device found first.
-		CBaslerUsbInstantCamera overheadCam(CTlFactory::GetInstance().CreateFirstDevice());
+					// =================================================================================================================
+					// Memory allocation
+					// =================================================================================================================
+					// The parameter MaxNumBuffer can be used to control the count of buffers
+					// allocated for grabbing. The default value of this parameter is 10.
+					overheadCam.MaxNumBuffer = 10;
 
-		// Open camera
-		overheadCam.Open();
-		fprintf(stdout, "\r\nInit Grabber: ok\n");
+					// =================================================================================================================
+					// Setting the trigger mode for Extern Trigger
+					// =================================================================================================================
+					// Set the acquisition mode to continuous frame
+					overheadCam.AcquisitionMode.SetValue(AcquisitionMode_Continuous);
+					// Set the mode for the selected trigger
+					overheadCam.TriggerMode.SetValue(TriggerMode_Off);
+					// Disable the acquisition frame rate parameter (this will disable the camera’s // internal frame rate control and allow you to control the frame rate with // external frame start trigger signals)
+					overheadCam.AcquisitionFrameRateEnable.SetValue(false);
+					// Select the frame start trigger
+					overheadCam.TriggerSelector.SetValue(TriggerSelector_FrameStart);
+					// Set the mode for the selected trigger
+					overheadCam.TriggerMode.SetValue(TriggerMode_On);
+					// Set the source for the selected trigger
+					overheadCam.TriggerSource.SetValue(TriggerSource_Line1);
+					// Set the trigger activation mode to rising edge
+					overheadCam.TriggerActivation.SetValue(TriggerActivation_RisingEdge);
 
-		// =================================================================================================================
-		// Setting the image size and camera format
-		// =================================================================================================================
-		// TODO ADD SOME IMAGE PARAMETERS OR DELETE
-		// Set for the trigger width exposure mode
-		overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth);
-		// Set the exposure overlap time max- the shortest exposure time // we plan to use is 1500 us
-		overheadCam.ExposureOverlapTimeMax.SetValue(1500);
+					// =================================================================================================================
+					// Setting the image size and camera format // but really mostly just exposure
+					// =================================================================================================================
+					// Set for the trigger width exposure mode
+					overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth);
+					// Set the exposure overlap time max- the shortest exposure time // we plan to use is 1500 us
+					overheadCam.ExposureOverlapTimeMax.SetValue(1500);
+
+					// =======================================
+					// Kickoff triggered acquisition & grabbing images from the buffer
+					//=======================================
+					// Prepare for frame acquisition here
+					overheadCam.AcquisitionStart.Execute();
+
+					// Start the grabbing of c_countOfImagesToGrab images.
+					// The camera device is parameterized with a default configuration which
+					// sets up free-running continuous acquisition.
+					overheadCam.StartGrabbing(c_countOfImagesToGrab);
+					printf("Basler Camera is armed and ready\n\r");
+
+					// =================================================================================================================
+					// Receive datagram from Machine B to start capturing sequence AVI
+					// =================================================================================================================
+
+					// Call the recvfrom function to receive datagrams on the bound socket.
+					wprintf(L"Receiving datagrams from Machine B...Start Capture...\n");
+					memset(&RecvBuf[0], 0, sizeof(RecvBuf));
+					// TODO THIS IS WHERE THINGS BEGIN TO BREAK
+					iResult = recvfrom(RecvSocket, RecvBuf, BufLen, 0, (SOCKADDR *)& AddrMachineB, &SenderAddrSizeB);
+					if (iResult == SOCKET_ERROR) {
+						wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+						printf("A\n");
+					}
+					/* Not CLEAR what these lines do
+					while ((strcmp(inet_ntoa(AddrMachineB.sin_addr), SERVERB) != 0) && (ntohs(AddrMachineB.sin_port) != PORTB)) {
+						iResult = recvfrom(RecvSocket, RecvBuf, BufLen, 0, (SOCKADDR *)& AddrMachineB, &SenderAddrSizeB);
+						if (iResult == SOCKET_ERROR) {
+							wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+							printf("B\n");
+							//break;
+						}
+
+					}*/
+
+					printf("Received packet from %s: %d\n", inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
+					printf("Data: %s\r\n\n", RecvBuf);
+
+					// =================================================================================================================
+					// Send datagram to PPOD to adjust shaking parameters
+					// =================================================================================================================
+					wprintf(L"Sending a datagram to Machine C...PPOD shaking parameters...\n");
+
+					// Create message to send
+					memset(&SendBuf[0], 0, sizeof(SendBuf));
+
+					if (IDENTIFIER == 'E') {
+						sprintf(UDPmessage, "%c %d %d %d %d %d %d %d", IDENTIFIER, PHASE_OFFSET, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y);
+					}
+					else if (IDENTIFIER == 'S') {
+						sprintf(UDPmessage, "%c %d", IDENTIFIER, SAVEDSIGNAL);
+					}
+
+					strcpy(SendBuf, UDPmessage);
+					printf("UDP message: %s\r\n\n", SendBuf);
 
 
-		// =================================================================================================================
-		// Memory allocation
-		// =================================================================================================================
-		// The parameter MaxNumBuffer can be used to control the count of buffers
-		// allocated for grabbing. The default value of this parameter is 10.
-		overheadCam.MaxNumBuffer = 10;
+					// Send message to Machine C
+					iResult = sendto(SendSocket, SendBuf, BufLen, 0, (SOCKADDR *)& AddrMachineC, sizeof(AddrMachineC));
+					if (iResult == SOCKET_ERROR) {
+						wprintf(L"sendto failed with error: %d\n", WSAGetLastError());
+						closesocket(SendSocket);
+						WSACleanup();
+						return 1;
+					}
 
-		// =================================================================================================================
-		// Setting the trigger mode for Extern Trigger
-		// =================================================================================================================
-		// Set the acquisition mode to continuous frame
-		overheadCam.AcquisitionMode.SetValue(AcquisitionMode_Continuous);
-		// Set the mode for the selected trigger
-		overheadCam.TriggerMode.SetValue(TriggerMode_Off);
-		// Disable the acquisition frame rate parameter (this will disable the camera’s // internal frame rate control and allow you to control the frame rate with // external frame start trigger signals)
-		overheadCam.AcquisitionFrameRateEnable.SetValue(false);
-		// Select the frame start trigger
-		overheadCam.TriggerSelector.SetValue(TriggerSelector_FrameStart);
-		// Set the mode for the selected trigger
-		overheadCam.TriggerMode.SetValue(TriggerMode_On);
-		// Set the source for the selected trigger
-		overheadCam.TriggerSource.SetValue(TriggerSource_Line1);
-		// Set the trigger activation mode to rising edge
-		overheadCam.TriggerActivation.SetValue(TriggerActivation_RisingEdge);
+					Sleep(5000);
 
-		// =======================================
-		// Kickoff triggered acquisition & grabbing images from the buffer
-		//=======================================
-		// Prepare for frame acquisition here
-		overheadCam.AcquisitionStart.Execute();
-		// Start the grabbing of c_countOfImagesToGrab images.
-		// The camera device is parameterized with a default configuration which
-		// sets up free-running continuous acquisition.
-		overheadCam.StartGrabbing(c_countOfImagesToGrab);
+					// =================================================================================================================
+					// Wait until PPOD_ERROR less than a threshold value to continue
+					// =================================================================================================================
 
-		// This smart pointer will receive the grab result data.
-		CGrabResultPtr ptrGrabResult;
+					wprintf(L"Receiving datagrams from Machine C...PPOD_Error...\n");
 
-		// Camera.StopGrabbing() is called automatically by the RetrieveResult() method
-		// when c_countOfImagesToGrab images have been retrieved.
-		while (overheadCam.IsGrabbing())
-		{
-			// Wait for an image and then retrieve it. A timeout of 15000 ms is used.
-			overheadCam.RetrieveResult(15000, ptrGrabResult, TimeoutHandling_ThrowException);
+					// Reset PPOD_ERROR before first compare to errorThreshold
+					PPOD_ERROR = 10.0;
 
-			// Image grabbed successfully?
-			if (ptrGrabResult->GrabSucceeded())
-			{
+					// Wait until PPOD_ERROR less than a threshold value to continue		
+					while (PPOD_ERROR >= errorThreshold) {
 
-				// Access the image data.
-				cout << "SizeX: " << ptrGrabResult->GetWidth() << endl;
-				cout << "SizeY: " << ptrGrabResult->GetHeight() << endl;
-				const uint8_t *pImageBuffer = (uint8_t *)ptrGrabResult->GetBuffer();
-				cout << "Gray value of first pixel: " << (uint32_t)pImageBuffer[0] << endl << endl;
+						// Call the recvfrom function to receive datagrams on the bound socket.
+						memset(&RecvBufPPOD[0], 0, sizeof(RecvBufPPOD));
+						iResult = recvfrom(RecvSocketPPOD, RecvBufPPOD, BufLen, 0, (SOCKADDR *)& SenderAddr, &SenderAddrSizeB);
+						if (iResult == SOCKET_ERROR) {
+							wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+						}
+
+						while (strcmp(inet_ntoa(SenderAddr.sin_addr), SERVERC)) {
+							iResult = recvfrom(RecvSocketPPOD, RecvBufPPOD, BufLen, 0, (SOCKADDR *)& SenderAddr, &SenderAddrSizeB);
+							if (iResult == SOCKET_ERROR) {
+								wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
+							}
+						}
+
+						// Scan RecvBuf into PPOD_ERROR
+						sscanf(RecvBufPPOD, "%f", &PPOD_ERROR);
+						printf("PPOD_Error: %f, Threshold: %f\r\n", PPOD_ERROR, errorThreshold);
+					}
+					// =================================================================================================================
+					// Obtain frames from TrackCam using ExSync Trigger and store pointer to image in buf
+					// =================================================================================================================
+					// This smart pointer will receive the grab result data.
+					CGrabResultPtr ptrGrabResult;
+
+					// Camera.StopGrabbing() is called automatically by the RetrieveResult() method
+					// when c_countOfImagesToGrab images have been retrieved.
+					while (overheadCam.IsGrabbing())
+					{
+						// Wait for an image and then retrieve it. A timeout of 15000 ms is used.
+						overheadCam.RetrieveResult(15000, ptrGrabResult, TimeoutHandling_ThrowException);
+
+						// Image grabbed successfully?
+						if (ptrGrabResult->GrabSucceeded())
+						{
+
+							// Access the image data.
+							cout << "SizeX: " << ptrGrabResult->GetWidth() << endl;
+							cout << "SizeY: " << ptrGrabResult->GetHeight() << endl;
+							const uint8_t *pImageBuffer = (uint8_t *)ptrGrabResult->GetBuffer();
+							cout << "Gray value of first pixel: " << (uint32_t)pImageBuffer[0] << endl << endl;
 
 #ifdef PYLON_WIN_BUILD
-				// Display the grabbed image.
-				Pylon::DisplayImage(1, ptrGrabResult);
+							// Display the grabbed image.
+							Pylon::DisplayImage(1, ptrGrabResult);
 #endif
-			}
-			else
-			{
-				cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
+						}
+						else
+						{
+							cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
+						}
+					}
+					//=======================================
+					//Close grbl serial port
+					CloseSerialPort(m_hSerialCommGRBL);
+				}
+
 			}
 		}
-
-		// =================================================================================================================
-		// Receive datagram from Machine B to start capturing sequence AVI
-		// =================================================================================================================
-
-		// Call the recvfrom function to receive datagrams on the bound socket.
-		wprintf(L"Receiving datagrams from Machine B...Start Capture...\n");
-
-		memset(&RecvBuf[0], 0, sizeof(RecvBuf));
-		iResult = recvfrom(RecvSocket, RecvBuf, BufLen, 0, (SOCKADDR *)& SenderAddr, &SenderAddrSize);
-		if (iResult == SOCKET_ERROR) {
-			wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
-			printf("A\n");
-		}
-
-		while ((strcmp(inet_ntoa(SenderAddr.sin_addr), SERVERB)) || (strcmp(RecvBuf, "Start sequence AVI."))) { // 17-04-17 by Mengjiao
-			iResult = recvfrom(RecvSocket, RecvBuf, BufLen, 0, (SOCKADDR *)& SenderAddr, &SenderAddrSize);
-			if (iResult == SOCKET_ERROR) {
-				wprintf(L"recvfrom failed with error %d\n", WSAGetLastError());
-				printf("B\n");
-				//break;
-			}
-
-		}
-
-		printf("Received packet from %s: %d\n", inet_ntoa(SenderAddr.sin_addr), ntohs(SenderAddr.sin_port));
-		printf("Data: %s\r\n\n", RecvBuf);
-
-
-
-		//=======================================
-		//Close grbl serial port
-		CloseSerialPort(m_hSerialCommGRBL);
 	}
     catch (const GenericException &e)
     {

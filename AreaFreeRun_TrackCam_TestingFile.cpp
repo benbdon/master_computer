@@ -1416,7 +1416,7 @@ Note: Frame grabber must be re-opened/closed for taking more than one AVI in the
 				else if( IDENTIFIER == 'E' ) {
 					sprintf(filename, "TrackCam_%c_%dHz_%dA_%dA_%03dDPhase_%fDelayTime_%dFPS_%dPulseTime.avi", IDENTIFIER, FREQ, HORIZ_AMPL_Y, VERT_AMPL, PHASE_OFFSET, DELAYTIME, (FPS_Side/INTEGER_MULTIPLE), PULSETIME);
 				}
-
+				printf("MAKING AN AVI!!")
 				sprintf(filepath, "C:\\Documents and Settings\\lims\\Desktop\\Videos\\%s", filename);
 
 				VideoWriter writer2(filepath, codec, fps, FrameSize, isColor);
