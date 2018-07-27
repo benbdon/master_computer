@@ -19,7 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\C++\Grab\Grab.cpp" />
+    <ClCompile Include="comms.cpp" />
+    <ClCompile Include="master_code.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="comms.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
