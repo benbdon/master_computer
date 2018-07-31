@@ -14,11 +14,7 @@ HANDLE ConfigureSerialPortGRBL(HANDLE m_hSerialComm, const LPCTSTR m_pszPortName
 
 void Home(HANDLE m_hSerialCommGRBL, char GCODEmessage[]);
 
-void HomeNoRead(HANDLE m_hSerialCommGRBL, char GCODEmessage[]);
-
 void PositionAbsolute(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, int Ypos);
-
-void PositionAbsoluteNoRead(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, int Ypos);
 
 void PositionRelative(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, int Ypos);
 

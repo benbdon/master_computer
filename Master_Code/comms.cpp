@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include "comms.h"
+#include "file_IO.h"
 
 // Configure Serial Port
 HANDLE ConfigureSerialPort(HANDLE m_hSerialComm, const LPCTSTR m_pszPortName) {
@@ -97,6 +98,7 @@ string ReadSerialPort(HANDLE m_hSerialComm) {
 void WriteSerialPort(HANDLE m_hSerialComm, char message[]) {
 
 	unsigned long dwNumberOfBytesSent = 0;
+
 
 	// Append new line to end of message.
 	// Code adopted from: http://stackoverflow.com/questions/9955236/append-to-the-end-of-a-char-array-in-c
@@ -233,27 +235,12 @@ HANDLE ConfigureSerialPortGRBL(HANDLE m_hSerialComm, const LPCTSTR m_pszPortName
 //Returns DOD generator to home position, should be left corner against wall, if it isn't, use Universal Gcode Sender to reset home there
 void Home(HANDLE m_hSerialCommGRBL, char GCODEmessage[]) {
 	memset(&GCODEmessage[0], 0, sizeof(GCODEmessage));
-	sprintf(GCODEmessage, "G90 G0 X0 Y0");
-	WriteSerialPort(m_hSerialCommGRBL, GCODEmessage);
-}
-
-
-void HomeNoRead(HANDLE m_hSerialCommGRBL, char GCODEmessage[]) {
-	memset(&GCODEmessage[0], 0, sizeof(GCODEmessage));
-	sprintf(GCODEmessage, "G90 G0 X0 Y0");
+	sprintf(GCODEmessage, "$H");
 	WriteSerialPort(m_hSerialCommGRBL, GCODEmessage);
 }
 
 //Sends DOD Generator to specified location. Coordinats are relative to machine home position, center of PPOD should be around X110 Y-210
 void PositionAbsolute(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, int Ypos) {
-	memset(&GCODEmessage[0], 0, sizeof(GCODEmessage));
-	sprintf(GCODEmessage, "G90 G0 X%d Y%d", Xpos, Ypos);
-	WriteSerialPort(m_hSerialCommGRBL, GCODEmessage);
-}
-
-void PositionAbsoluteNoRead(HANDLE m_hSerialCommGRBL, char GCODEmessage[], int Xpos, int Ypos) {
-	//printf("debugging....");
-
 	memset(&GCODEmessage[0], 0, sizeof(GCODEmessage));
 	sprintf(GCODEmessage, "G90 G0 X%d Y%d", Xpos, Ypos);
 	WriteSerialPort(m_hSerialCommGRBL, GCODEmessage);

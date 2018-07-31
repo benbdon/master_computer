@@ -21,9 +21,11 @@
   <ItemGroup>
     <ClCompile Include="comms.cpp" />
     <ClCompile Include="master_code.cpp" />
+    <ClCompile Include="file_IO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="comms.h" />
+    <ClInclude Include="file_IO.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
