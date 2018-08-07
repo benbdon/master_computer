@@ -1,7 +1,6 @@
 // master_code.cpp
 /*
-    Overview: The compiled program based on the master_code.cpp source code is tightly couple to 3 (eventually 4) other distributed computers to control levitating droplets. It commands when and where the droplets should be released onto the vibrating surface, what control pattern the surface should be executing to horizontally manipulate and levitate the droplets, and lastly set the speed (FPS), # of frames, and resolution of the camera(s) capturing its motion.
-	
+    Overview: TBD
 	Distributed computer overview:
 	1. This Windows PC/(A)/(129.105.69.211) runs the "master_code" interfacing to the Baser camera/trackcam/overhead camera over USB 
 	2. The Windows PC/(C)/(129.105.67.174) runs the controller code for the shaker table/PPOD with 2 National Instruments DAQ cards for AI/AO from accelerometers & to motors + the PIC32 respectively
@@ -11,14 +10,16 @@
 
 //TCP/IP includes
 #include <winsock2.h> //most of the Winsock functions, structures, and definitions 
-#include <Ws2tcpip.h> //definitions introduced in the WInSock 2 Protocol-Specific Annex document for TCP/IP that includes newer functions and structures used to retrieve IP address.
+#include <Ws2tcpip.h> //definitions introduced in the WinSock 2 Protocol-Specific Annex document for TCP/IP that includes newer functions and structures used to retrieve IP address.
 #include "file_IO.h"
 #include "comms.h"
+#include "test_variables.h"
 #pragma comment(lib, "Ws2_32.lib")
 
 // Standard includes
-#include <iostream>     // std::cout, std::ostream, std::hex
+#include <iostream>     // std::cout
 #include <fstream>      // std::ifstream
+#include <algorithm>	//std::replace
 #include <string>
 #include <time.h>		// Sleep(milliseconds)
 
@@ -54,12 +55,11 @@ int main(int argc, char* argv[], char* envp[])
 	int exitCode = 0;
 	PylonInitialize();
 
-
 	try {
 		// =========================================================
 		// Initialization of Basler camera 
 		// =========================================================
-		cout << "Init Cam" << endl;
+		cout << "Initialize Basler Camera Settings" << endl;
 		// Create a USB instant camera object with the camera device found first.
 		CBaslerUsbInstantCamera overheadCam(CTlFactory::GetInstance().CreateFirstDevice());
 
@@ -200,89 +200,33 @@ int main(int argc, char* argv[], char* envp[])
 		// =============================================================================================================
 		// MAIN LOOP
 		// =============================================================================================================
-		int CommentsInTextFile = 0;
 		char FirstChar;
-		int LinesRead = 0;
-		string line;
-		char IDENTIFIER = 0;
-		int SAVEDSIGNAL = 0, FREQ = 0, VERT_AMPL = 0, HORIZ_AMPL_X = 0, HORIZ_AMPL_Y = 0, VERT_ALPHA = 0, HORIZ_ALPHA_X = 0;
-		int HORIZ_ALPHA_Y = 0, PHASE_OFFSET = 0, FPS_Side = 0, NUMIMAGES_Side = 0, INTEGER_MULTIPLE = 0, PULSETIME = 0;
-		float DELAYTIME = 0;
-		int PPOD_RESET = 0, CAM_MOVE = 0, XPOS = 0, YPOS = 0;
+		string current_line;
+		Test_Variables current_test; // instance of class that stores and updates test parameters
 
-		ifstream myFile(argv[1]); //instantiate 'read from file' object
+		ifstream myFile(argv[1]); //instantiate input file stream object
 
-		while (LinesRead < LinesInTextFile) { // Continue reading lines until have read the last line
-			getline(myFile, line);
-			LinesRead += 1;
-			sscanf(line.c_str(), "%c", &FirstChar);
-			while (FirstChar == '#') { // Check to see if first character is for comments (#)
-				getline(myFile, line);
-				LinesRead += 1;
-				sscanf(line.c_str(), "%c", &FirstChar);
-			}
+		for (int LinesRead = 0; LinesRead < LinesInTextFile; LinesRead++) { // Continue reading lines until have read the last line
+			getline(myFile, current_line);
+			
+			if (current_line.front() == '#') { continue; } // skip lines that contain a # at the beginnging
+			
+			replace(current_line.begin(), current_line.end(), ',', ' '); //replace the commas with spaces
 
-			// =====================================================================================================
-			// Scan line read from text file into local variables for current testing parameters
-			// =====================================================================================================
+			if (FirstChar == 'E')
+				current_test.E_set(current_line); //load test variables for PPOD equation mode
+			else
+				current_test.S_set(current_line); //load test variables for PPOD saved signals mode
 
-			// 1. IDENTIFIER - S & E - S for saved signal, E for PPOD equation
-			// 2. SAVED SIGNAL - Just S - Determines which saved signal is run
-			// 3. FREQ - S & E - PPOD vibration frequency in HZ
-			// 4. VERT_AMPL - Just E - Z axis accelerations of PPOD table in m/s^2
-			// 5. HORIZ_AMPL_X - Just E - X axis acceleration of PPOD table in m/s^2
-			// 6. HORIZ_AMPL_Y - Just E - Y axis acceleration of PPOD table in m/s^2
-			// 7. VERT_ALPHA - Just E - Amplitude of frequency rotating surface about Z axis
-			// 8. HORIZ_ALPHA_X - Just E - Amplitude of the frequency rotating PPOD about gantry x axis
-			// 9. HORIZ_ALPHA_Y - Just E - Amplitude of frequency roating PPOD about gantry y axis
-			// 10. PHASE_OFFSET - Just E - Decouples horizontal and vertical frequencies for adjusting bouncing behavior (0 - 360)
-			// 11. FPS_Side - S & E - Frame rate of Mikrotron (side) camera in frames per second
-			// 12. NUMIMAGES_Side - S & E - Number of frames the side camera will capture in a given experiment
-			// 13. INTEGER_MULTIPLE - S & E - Determines the frame rate for the TrackCam (overhead)
-			// 14. PULSETIME - S & E - Pulse time for piezeo in droplet generator in microseconds (680-900)
-			// 15. DELAYTIME - S & E - Delay from when cameras start capture to when the droplet is made in seconds (0.000 - 0.0500)
-			// 16. PPOD_RESET - S & E - Use to turn off PPOD after a given experiment completes
-			// 17. Camera_Move - S & E - (1) Moves the cam out of the cam frame (0) doesn't move the camera
-			// 18. XPOS - S & E - Location of the droplet in x axis relative to the center of the bath (-15 - 15)
-			// 19. YPOS - S & E - Location of the droplet in y axis relative to the center of the bath (-15 - 15)
-
-
-			// Scan line for first character
-			sscanf(line.c_str(), "%c", &FirstChar);
-
-			// PPOD Saved Signal - [IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
-			if (FirstChar == 'S') {
-				sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d", &IDENTIFIER, &SAVEDSIGNAL, &FREQ, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
-
-				printf("\n[IDENTIFIER, SAVEDSIGNAL: %c, %d\r\n", IDENTIFIER, SAVEDSIGNAL);
-				printf("FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d, %d\r\n", FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
-				printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
-				printf("PPOD_RESET: %d\r\n", PPOD_RESET);
-				printf("(XPOS, YPOS)]: %d, %d\r\n", XPOS, YPOS);
-				printf("CAM_MOVE: %d\r\n", CAM_MOVE);
-			}
-			// PPOD Equations - [IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME, PPOD_RESET, CAM_MOVE, XPOS, YPOS]
-			else if (FirstChar == 'E') {
-				sscanf(line.c_str(), "%c%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %d%*c %f%*c %d%*c %d%*c %d%*c %d",
-					&IDENTIFIER, &FREQ, &VERT_AMPL, &HORIZ_AMPL_X, &HORIZ_AMPL_Y, &VERT_ALPHA, &HORIZ_ALPHA_X, &HORIZ_ALPHA_Y,
-					&PHASE_OFFSET, &FPS_Side, &NUMIMAGES_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME, &PPOD_RESET, &CAM_MOVE, &XPOS, &YPOS);
-
-				printf("\n[IDENTIFIER: %c\r\n", IDENTIFIER);
-				printf("FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET: %d, %d, %d, %d, %d, %d, %d, %d\r\n", FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y, PHASE_OFFSET);
-				printf("FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE: %d, %d, %d\r\n", FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
-				printf("PULSETIME, DELAYTIME: %d, %f\r\n", PULSETIME, DELAYTIME);
-				printf("PPOD_RESET: %d\r\n", PPOD_RESET);
-				printf("(XPOS, YPOS): %d, %d\r\n", XPOS, YPOS);
-				printf("CAM_MOVE: %d\r\n", CAM_MOVE);
-			}
+			current_test.display_updated_parameters(current_line);
 
 			// =================================================================================================================
 			// Move DOD to specified location
 			// =================================================================================================================
-			int Xdrop = defX + XPOS;
-			int Ydrop = defY + YPOS;
+			int Xdrop = defX + current_test.XPOS;
+			int Ydrop = defY + current_test.YPOS;
 
-			printf("Moving to (%d, %d).\r\n", XPOS, YPOS);
+			cout << "Moving to ("<< current_test.XPOS << ", " << current_test.YPOS << ")\r\n";
 			PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, Xdrop, Ydrop);
 
 			// =================================================================================================================
@@ -295,17 +239,21 @@ int main(int argc, char* argv[], char* envp[])
 			int sendbuflen = DEFAULT_BUFLEN;
 
 			// Create message to send
+			
+			/*
 			if (IDENTIFIER == 'E') {
-				sprintf(sendbuf, "%c %d %d %d %d %d %d %d", IDENTIFIER, PHASE_OFFSET, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y);
+				sprintf(sendbuf, "%c %d %d %d %d %d %d %d", current_test, IDENTIFIER, PHASE_OFFSET, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y);
+				printf("The send message is this long: %d", strlen(sendbuf));
 				printf("TCP message: %s\n", sendbuf);
 			}
 			else {
 				printf("Was expecting type E\n");
 			}
 			//TODO: Add back the equation case by figuring out the right number of bytes to send
-			/*else if (IDENTIFIER == 'S') {
+			else if (IDENTIFIER == 'S') {
 				sprintf(UDPmessage, "%c %d", IDENTIFIER, SAVEDSIGNAL);
-			}*/
+			}
+			*/
 
 			// Send PPOD parameters to PPOD PC
 			iResult = send(ConnectSocket, sendbuf, sendbuflen, 0);
@@ -328,11 +276,10 @@ int main(int argc, char* argv[], char* envp[])
 			// Receive data until the server closes the connection
 			do {
 				// Define errorThreshold for PPOD after changed signal
-				float PPOD_ERROR = 0.2;
 				iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 				if (iResult > 0) {
 					printf("Bytes received: %d\n", iResult);
-					cout << PPOD_ERROR << endl;
+					printf("%.*s: Shaker platform is ready\n", 4, recvbuf);
 				}
 				else if (iResult == 0)
 					printf("Nothing to read\n");
@@ -344,15 +291,16 @@ int main(int argc, char* argv[], char* envp[])
 			// Send command to PIC32 to trigger frame capture
 			// =================================================================================================================
 			// TODO
-			cout << "Pictures are taken" << endl;
-			static const uint32_t c_countOfImagesToGrab = 5;
+
 			
-			/*
+			
 
 			// =======================================
 			// Kickoff triggered acquisition & grabbing images from the buffer
 			//=======================================
-
+			static const uint32_t c_countOfImagesToGrab = 5;
+			cout << "Pictures are taken" << endl;
+			/*
 			// Prepare for frame acquisition here
 			overheadCam.AcquisitionStart.Execute();
 
@@ -402,6 +350,7 @@ int main(int argc, char* argv[], char* envp[])
 
 		}
 		// cleanup
+		myFile.close(); // close the txt file
 		closesocket(ConnectSocket); // When the client application is completed using the Windows Sockets DLL
 		WSACleanup(); // the WSACleanup function is called to release resources.
 		CloseSerialPort(m_hSerialCommPIC); // Close PIC serial port
