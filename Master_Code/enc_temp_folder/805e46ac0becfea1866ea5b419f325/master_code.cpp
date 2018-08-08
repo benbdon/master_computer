@@ -275,6 +275,7 @@ int main(int argc, char* argv[], char* envp[])
 				WSACleanup();
 				return 1;
 			}
+			printf("Bytes Sent: %d\n", iResult);
 
 			// Receive data from server closes
 			iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);

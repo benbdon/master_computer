@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
+#include "file_IO.h"
 using namespace std;
 
 // =================================================================================================================
@@ -48,7 +48,6 @@ int file_verification(char* file_name) {
 
 		printf("  Lines in text file: %d\r\n", LinesInTextFile);
 		printf("  Number of tests to perform: %d\r\n", (LinesInTextFile - CommentsInTextFile));
-		printf("\r\n\n============================================================================\r\n\n");
 	}
 	return LinesInTextFile;
 }

@@ -4,7 +4,6 @@
 #include <iostream>
 #include <sstream>
 #include "comms.h"
-#include "file_IO.h"
 
 // Configure Serial Port
 HANDLE ConfigureSerialPort(HANDLE m_hSerialComm, const LPCTSTR m_pszPortName) {
@@ -136,8 +135,6 @@ void WriteSerialPort(HANDLE m_hSerialComm, char message[]) {
 			//break;
 		}
 	}
-	//cout << "\r\nLine written to serial port: " << pszBuf << "\r\n";
-
 }
 
 // Close Serial Port
