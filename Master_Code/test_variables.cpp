@@ -51,7 +51,7 @@ void Test_Variables::display_updated_parameters(string line) {
 	// CAM_MOVE, XPOS, YPOS]
 	else if (IDENTIFIER == 'E') {
 		
-		cout << "\n[IDENTIFIER: " << IDENTIFIER << endl;
+		cout << "IDENTIFIER: " << IDENTIFIER << endl;
 		cout << "FREQ: " << FREQ << endl;
 		cout << "VERT_AMPL: " << VERT_AMPL << endl;
 		cout << "HORIZ_AMPL_X: " << HORIZ_AMPL_X << endl;

@@ -207,7 +207,7 @@ int main(int argc, char* argv[], char* envp[])
 		// =============================================================================================================
 		// MAIN LOOP
 		// =============================================================================================================
-		cout << "beginning main loop" << endl;
+		cout << "=============================beginning main loop=============================" << endl;
 		string current_line;
 		Test_Variables current_test; // instance of class that stores and updates test parameters
 		ifstream myFile(argv[1]); //instantiate input file stream object
@@ -264,7 +264,11 @@ int main(int argc, char* argv[], char* envp[])
 				strcpy(sendbuf, test_params_for_PPOD.str().c_str());
 
 			} else if (current_test.IDENTIFIER == 'S') {
-				sprintf(sendbuf, "%c %d", current_test.IDENTIFIER, current_test.SAVEDSIGNAL);
+				test_params_for_PPOD << current_test.IDENTIFIER << " " <<
+					current_test.SAVEDSIGNAL;
+				cout << "IDENTIFIER, SAVEDSIGNAL" << endl;
+				cout << "MESSAGE FOR TCP: " << test_params_for_PPOD.str() << endl;
+				strcpy(sendbuf, test_params_for_PPOD.str().c_str());
 			}
 
 			// Send PPOD parameters to PPOD PC
@@ -345,7 +349,7 @@ int main(int argc, char* argv[], char* envp[])
 				}
 			}
 			*/
-
+			cout << "=============================finished iteration=============================" << endl;
 		}
 		// cleanup
 		myFile.close(); // close the txt file
