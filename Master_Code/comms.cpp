@@ -221,14 +221,52 @@ HANDLE ConfigureSerialPortGRBL(HANDLE m_hSerialComm, const LPCTSTR m_pszPortName
 		printf("Error in GRBL SetCommTimeouts. Possibly a problem with the communications port handle or a problem with the COMMTIMEOUTS structure itself.\r\n");
 	}
 	printf("GRBL Serial port set for Read and Write Timeouts.\r\n");
-
-	string returnedMessage = ReadSerialPort(m_hSerialComm);
+	
+	string returnedMessage = ReadSerialPortGRBL(m_hSerialComm);
 	returnedMessage.append("\r\n");
 	printf(returnedMessage.c_str());
-
-
+	
 	return m_hSerialComm;
+}
 
+// Read Serial Port - receives data from the PIC32
+string ReadSerialPortGRBL(HANDLE m_hSerialComm) {
+
+	// String buffer to store bytes read and dwEventMask is an output parameter, which reports the event type that was fired
+	stringbuf sb;
+	DWORD dwEventMask;
+
+	// Setup a Read Event using the SetCommMask function using event EV_RXCHAR
+	if (!SetCommMask(m_hSerialComm, EV_RXCHAR)) {
+		printf("Error in SetCommMask to read an event.\r\n");
+	}
+
+	// Call the WaitCommEvent function to wait for the event to occur
+	if (WaitCommEvent(m_hSerialComm, &dwEventMask, NULL)) {
+		printf("WaitCommEvent successfully called.\r\n");
+		char szBuf;
+		DWORD dwIncomingReadSize;
+		DWORD dwSize = 0;
+
+		// Once this event is fired, we then use the ReadFile function to retrieve the bytes that were buffered internally
+		do {
+			if (ReadFile(m_hSerialComm, &szBuf, 1, &dwIncomingReadSize, NULL) != 0) {
+				if (dwIncomingReadSize > 0) {
+					dwSize += dwIncomingReadSize;
+					sb.sputn(&szBuf, dwIncomingReadSize);
+				}
+			}
+			else {
+				//Handle Error Condition
+				printf("Error in ReadFile.\r\n");
+			}
+		} while (dwIncomingReadSize > 0);
+	}
+	else {
+		//Handle Error Condition
+		printf("Could not call the WaitCommEvent.\r\n");
+	}
+	return sb.str();
 }
 
 //Returns DOD generator to home position, should be left corner against wall, if it isn't, use Universal Gcode Sender to reset home there
