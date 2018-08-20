@@ -269,6 +269,18 @@ string ReadSerialPortGRBL(HANDLE m_hSerialComm) {
 	return sb.str();
 }
 
+// Close Serial Port
+void CloseSerialPortGRBL(HANDLE m_hSerialComm) {
+
+	if (m_hSerialComm != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(m_hSerialComm);
+		m_hSerialComm = INVALID_HANDLE_VALUE;
+	}
+	printf("Serial port closed.\r\n");
+
+}
+
 //Returns DOD generator to home position, should be left corner against wall, if it isn't, use Universal Gcode Sender to reset home there
 void Home(HANDLE m_hSerialCommGRBL, char GCODEmessage[]) {
 	memset(&GCODEmessage[0], 0, sizeof(GCODEmessage));
