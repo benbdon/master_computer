@@ -35,16 +35,18 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-using namespace Pylon; 
-using namespace Basler_UsbCameraParams;
-using namespace std;
+//To avoid std:: and other such annoying scope operators...
+using namespace Pylon; //Basler camera functions
+using namespace Basler_UsbCameraParams; // Specific Basler camera functions
+using namespace std; // C++ standard library
+using namespace cv; // Computer Vision functions
 
 // Serial ports
-#define ComPortPIC		"COM4"			// Serial communication port 
-#define ComPortGRBL     "COM3"         // Serial communication port
+#define ComPortPIC		"COM4"			// Serial communication port for PIC32
+#define ComPortGRBL     "COM3"         // Serial communication port for Arduino/GRBL
 
 // TCP/IP address & port
-//#define SERVERB   "129.105.69.220"  // server IP address (Machine B - Linux/Mikrotron)
+//#define SERVERB   "129.105.69.220"  // server IP address (Machine B - Linux/Mikrotron) unused in this project, so far...
 
 #define SERVERC   "129.105.69.174"  // server IP address (Machine C - PPOD)
 
@@ -54,8 +56,7 @@ using namespace std;
 int main(int argc, char* argv[])
 {
 	int exitCode = 0;
-	PylonInitialize(); // Before using any pylon methods, the pylon runtime must be initialized.
-	
+	PylonAutoInitTerm autoInitTerm; //Automatically opens and closes PylonInitialize()
 	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET; 	// Declare Socket
 	HANDLE m_hSerialCommPIC = { 0 }; // Declare handle for serial comms to PIC32
@@ -90,6 +91,7 @@ int main(int argc, char* argv[])
 		formatConverter.OutputPixelFormat = PixelType_BGR8packed; // Specify the output pixel format
 		CPylonImage pylonImage; // Create a Pylon Image that will be used to create OpenCV images later 
 		int grabbedImages = 0;
+		Mat openCvImage; // Create an OpenCV image
 
 		printf("\r\n\n============Cam settings initialized=============================\r\n\n");
 
@@ -98,7 +100,7 @@ int main(int argc, char* argv[])
 		// =====================================================================================================================
 		cout << "\r\n\nConfiguring serial ports" << endl;
 		m_hSerialCommPIC = ConfigureSerialPort(m_hSerialCommPIC, ComPortPIC);
-		m_hSerialCommGRBL = ConfigureSerialPortGRBL(m_hSerialCommGRBL, ComPortGRBL); //Hint: if it stalls out around here, stop the program and run the "UniversalGcodeSender.jar" file to put the Arduino back into a usable condition
+		m_hSerialCommGRBL = ConfigureSerialPortGRBL(m_hSerialCommGRBL, ComPortGRBL); //Hint: if the program stalls out here, stop the program and run the "UniversalGcodeSender.jar" file to put the Arduino back into a usable condition
 		printf("\r\n\n============Serial ports configured==============================\r\n\n");
 
 		// =====================================================================================================================
@@ -318,15 +320,16 @@ int main(int argc, char* argv[])
 					//cout << "Gray value of first pixel: " << (uint32_t)pImageBuffer[0] << endl << endl;
 					cout << "Image Acquired" << endl;
 					formatConverter.Convert(pylonImage, ptrGrabResult);
+					openCvImage = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *)pylonImage.GetBuffer());
 					ostringstream s; // Create the current image name for saving.
 					s << "Image_" << grabbedImages << ".jpg";
 					string imageName(s.str());
+					imwrite(imageName, openCvImage);
 					grabbedImages++;
-
-				#ifdef PYLON_WIN_BUILD
-					// Display the grabbed image.
-					Pylon::DisplayImage(1, ptrGrabResult);
-				#endif
+					/*#ifdef PYLON_WIN_BUILD
+						// Display the grabbed image.
+						Pylon::DisplayImage(1, ptrGrabResult);
+					#endif*/
 				}
 				else {
 					cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
@@ -334,6 +337,12 @@ int main(int argc, char* argv[])
 			}
 			cout << "\r\n=============================finished iteration=============================\r\n" << endl;
 		}
+		// TODO: Create a shutdown TCP message that sends zeros or some unique character string that triggers the a shutdown on the PPOD
+		namedWindow("OpenCV Display Window", CV_WINDOW_NORMAL);
+		Mat image = imread("Image_0.jpg");
+		imshow("OpenCV Display Window", image); // Display current image in OpenCV display window
+		waitKey(0);
+
 		cout << "\r\n=============================done & shutting down=============================\r\n" << endl;
 		// =================================================================================================================
 		// Clean-up and shutdown
@@ -354,6 +363,5 @@ int main(int argc, char* argv[])
 	closesocket(ConnectSocket); // When the client application is completed using the Windows Sockets DLL
 	WSACleanup(); // the WSACleanup function is called to release resources.
 
-	PylonTerminate(0); // Release all pylon resources.
 	return 0;
 }
