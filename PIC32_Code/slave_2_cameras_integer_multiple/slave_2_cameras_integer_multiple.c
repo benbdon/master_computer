@@ -36,8 +36,8 @@
 // Piezoelectric waveform: -Vcc changes to +Vcc for T microseconds, then back to -Vcc
 //
 // PWMA = 20 kHz PWM - Timer3 - OC1 (D0)
-// L1 = Digital Output RA10
-// L2 = Digital Output RA2
+// L1 = Digital Output RD2
+// L2 = Digital Output RD1
 // VM = 24V / 600mA
 //
 // CPU running at 40 MHz
@@ -117,8 +117,8 @@ void __ISR(_CHANGE_NOTICE_VECTOR, IPL3SOFT) CNISR(void) { // INT step 1
 
 		//+Vcc: set L1 to LOW, L2 to HIGH, PWMA to >0
 		OC1RS = 4000;
-		LATAbits.LATA10 = 0;
-		LATAbits.LATA2 = 1;
+		LATDbits.LATD2 = 0;
+		LATDbits.LATD1 = 1;
 
 		//Remain +Vcc for PULSETIME microseconds
 		int counter2=0;
@@ -128,8 +128,8 @@ void __ISR(_CHANGE_NOTICE_VECTOR, IPL3SOFT) CNISR(void) { // INT step 1
 
 		//-Vcc: set L1 to HIGH, L2 to LOW, PWMA to >0
 		OC1RS = 4000;
-		LATAbits.LATA10 = 1;
-		LATAbits.LATA2 = 0;
+		LATDbits.LATD2 = 1;
+		LATDbits.LATD1 = 0;
 
 
 		// -------------------------------------------------------------------------------------------
@@ -203,8 +203,8 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 		// Send ExSync signals to both cameras for the first frame
 		if( CurrentExSync_Side == 0 ) {
 			// Set A3/A4 to LOW
-			LATAbits.LATA3 = 0;
-			LATAbits.LATA4 = 0;
+			LATBbits.LATB3 = 0;
+			LATBbits.LATB4 = 0;
 
 			// Remain LOW for 100 clock cycles
 			int counter1 = 0;
@@ -213,14 +213,14 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 			}
 
 			// Set A3/A4 to HIGH
-			LATAbits.LATA3 = 1;
-			LATAbits.LATA4 = 1;
+			LATBbits.LATB3 = 1;
+			LATBbits.LATB4 = 1;
 		}
 		// If integer multiple of side-view camera, send ExSync signals to both camera
 		else if( (CurrentExSync_Side % INTEGER_MULTIPLE) == 0 ) {
 			// Set A3/A4 to LOW
-			LATAbits.LATA3 = 0;
-			LATAbits.LATA4 = 0;
+			LATBbits.LATB3 = 0;
+			LATBbits.LATB4 = 0;
 
 			// Remain LOW for 100 clock cycles
 			int counter1 = 0;
@@ -229,13 +229,13 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 			}
 
 			// Set A3/A4 to HIGH
-			LATAbits.LATA3 = 1;
-			LATAbits.LATA4 = 1;
+			LATBbits.LATB3 = 1;
+			LATBbits.LATB4 = 1;
 		}
 		// If not integer multiple of side-view camera, send ExSync signals to side-view camera only
 		else {
 			// Set A3 to LOW
-			LATAbits.LATA3 = 0;
+			LATBbits.LATB3 = 0;
 
 			// Remain LOW for 100 clock cycles
 			int counter1 = 0;
@@ -244,7 +244,7 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 			}
 
 			// Set A3 to HIGH
-			LATAbits.LATA3 = 1;
+			LATBbits.LATB3 = 1;
 		}
 
 
@@ -265,7 +265,7 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 void __ISR(_EXTERNAL_2_VECTOR, IPL2SOFT) Ext2ISR(void) { // step 1: the ISR
 
 	// Wait until USER button is released, then wait 5M core ticks before clearing interrupt flag
-	while(!PORTDbits.RD13) {		// Pin D13 is the USER switch, low if pressed.
+	while(!PORTDbits.RD7) {		// Pin D7 is the USER switch, low if pressed.
 		;
 	}
 
@@ -276,8 +276,8 @@ void __ISR(_EXTERNAL_2_VECTOR, IPL2SOFT) Ext2ISR(void) { // step 1: the ISR
 
 	//+Vcc: set L1 to LOW, L2 to HIGH, PWMA to >0
 	OC1RS = 4000;
-	LATAbits.LATA10 = 0;
-	LATAbits.LATA2 = 1;
+	LATDbits.LATD2 = 0;
+	LATDbits.LATD1 = 1;
 
 	//Remain +Vcc for PULSETIME microseconds
 	int counter3=0;
@@ -287,8 +287,8 @@ void __ISR(_EXTERNAL_2_VECTOR, IPL2SOFT) Ext2ISR(void) { // step 1: the ISR
 
 	//-Vcc: set L1 to HIGH, L2 to LOW, PWMA to >0
 	OC1RS = 4000;
-	LATAbits.LATA10 = 1;
-	LATAbits.LATA2 = 0;
+	LATDbits.LATD2 = 1;
+	LATDbits.LATD1 = 0;
 
 
 	// Increment drop counter
@@ -377,13 +377,13 @@ int main(void) {
   OC1CONbits.ON = 1;       						// turn on OC1
 
 	// Set A10/A2 to digital output pins
-	TRISAbits.TRISA10 = 0;							// RA10 is an output pin
-	TRISAbits.TRISA2 = 0;								// RA2 is an output pin
+	TRISDbits.TRISD2 = 0;							// RA10 is an output pin
+	TRISDbits.TRISD1 = 0;								// RA2 is an output pin
 
 	//-Vcc: set L1 to HIGH, L2 to LOW, PWMA to >0
 	OC1RS = 4000;
-	LATAbits.LATA10 = 1;
-	LATAbits.LATA2 = 0;
+	LATDbits.LATD2 = 1;
+	LATDbits.LATD1 = 0;
 
 
 
@@ -392,12 +392,12 @@ int main(void) {
 	// =============================================================================================
 
 	// Digital output pin
-	TRISAbits.TRISA3 = 0;
-	TRISAbits.TRISA4 = 0;
+	TRISBbits.TRISB3 = 0;
+	TRISBbits.TRISB4 = 0;
 
 	// Set to HIGH
-	LATAbits.LATA3 = 1;
-	LATAbits.LATA4 = 1;
+	LATBbits.LATB3 = 1;
+	LATBbits.LATB4 = 1;
 
 
 
@@ -407,7 +407,7 @@ int main(void) {
   while(1) {
 
 		// Get message from computer
-    NU32_ReadUART1(message, MAX_MESSAGE_LENGTH);
+    NU32_ReadUART3(message, MAX_MESSAGE_LENGTH);
 
 		//Serial message: [NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME]
 		sscanf(message, "%d%*c %d%*c %d%*c %d%*c %f", &NUMIMAGES_Side, &FPS_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME);		//%*c reads in comma and ignores it
