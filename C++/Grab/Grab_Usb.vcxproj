@@ -18,6 +18,9 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="grab\Grab.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>Grab</ProjectName>
     <ProjectGuid>{9CE2A9A4-2EFB-4EF7-B54D-6B44317D4B59}</ProjectGuid>
@@ -172,9 +175,6 @@
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Grab.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

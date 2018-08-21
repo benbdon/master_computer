@@ -7,7 +7,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Grab.cpp">
+    <ClCompile Include="grab\Grab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
