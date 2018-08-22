@@ -1,40 +1,38 @@
 #include "LCD.h"
-#include<xc.h>
+#include<xc.h>    // SFR definitions from the processor header file and some other macros
+
+#define PMABIT 10 // which PMA bit number to use
 
 // wait for the peripheral master port (PMP) to be ready
 // should be called before every read and write operation
 static void waitPMP(void)
 {
-  while(PMMODEbits.BUSY) {
-    ;
-  }
+  while(PMMODEbits.BUSY) { ; }
 }
 
-
-// wait for the lcd to finish its command.
+// wait for the LCD to finish its command.
 // We check this by reading from the LCD
 static void waitLCD() {
   volatile unsigned char val = 0x80;
   
-  // Read from the LCD until the Busy flag (BF, 7th bit) is 0,
+  // Read from the LCD until the Busy flag (BF, 7th bit) is 0
   while (val & 0x80) {
     val = LCD_Read(0);
   }
   int i = 0;
-  for(i = 0; i < 50; ++i) {
+  for(i = 0; i < 50; ++i) { // slight delay
     _nop();
   }
 }
 
-
-// setup the parallel master port (PMP) to control the LCD 
+// set up the parallel master port (PMP) to control the LCD 
 // pins RE0 - RE7 (PMD0 - PMD7) connect to LCD pins D0 - D7
 // pin RD4 (PMENB) connects to LCD pin E
 // pin RD5 (PMRD/PMWR) Connects to LCD pin R/W
-// pin RD11 (PMA14) Connects to RS.
+// pin RB13 (PMA10) Connects to RS.
 // interrupts will be disabled while this function executes
 void LCD_Setup() {
-  int en = __builtin_disable_interrupts();  // disable interrupts
+  int en = __builtin_disable_interrupts();  // disable interrupts, remember initial state
   
   IEC1bits.PMPIE = 0;    // disable PMP interrupts
   PMCON = 0;             // clear PMCON, like it is on reset
@@ -47,39 +45,39 @@ void LCD_Setup() {
   PMMODEbits.MODE = 0x3; // set master mode 1, which uses a single strobe
 
   // Set up wait states.  The LCD requires data to be held on its lines
-  // for a minimum amount of time before it works
+  // for a minimum amount of time.
   // All wait states are given in peripheral bus clock
-  // (PBCLK) cycles.  PBCLK of 80 Mhz in our case
-  // so one cycle is 1/80Mhz = 12.5ns.
+  // (PBCLK) cycles.  PBCLK of 80 MHz in our case
+  // so one cycle is 1/80 MHz = 12.5 ns.
   // The timing controls asserting/clearing PMENB (RD4) which
   // is connected to the E pin of the LCD (we refer to the signal as E here)
   // The times required to wait can be found in the LCD controller's data sheet.
   // The cycle is started when reading from or writing to the PMDIN SFR.
-  // Note that the wait states for writes start at 1 (except WAITE)
+  // Note that the wait states for writes start with minimum of 1 (except WAITE)
   // We add some extra wait states to make sure we meet the time and
-  // account for variations in timing amongst different HD4780 compatible parts.
-  // The timing we use here is for the KS066U which is faster than the HD4780
+  // account for variations in timing amongst different HD44780 compatible parts.
+  // The timing we use here is for the KS066U which is faster than the HD44780.
   PMMODEbits.WAITB = 0x3;  // Tas in the LCD datasheet is 60 ns 
-  PMMODEbits.WAITM = 0xF;  // PWeh in the data sheet is 230 ns (we don't meet this but do our best)
+  PMMODEbits.WAITM = 0xF;  // PWeh in the data sheet is 230 ns (we don't quite meet this)
                            // If not working for your LCD you may need to reduce PBCLK
   PMMODEbits.WAITE = 0x1;  // after E is low wait Tah (10ns)
 
-  PMAENbits.PTEN14 = 1; // PMA14 is an adddress port
-
-  PMCONbits.ON = 1;      // enable the PMP peripheral
-  // perform the initialization sequence
-  LCD_Function(1,0);     // 2 line mode, small font
-  LCD_Display(1, 0, 0);  // Display ON/OFF control: display on cursor off blinking cursor off
-  LCD_Clear();          // clear the LCD 
-  LCD_Entry(1, 0);       // Cursor moves left to right. do not shift the display
+  PMAEN |= 1 << PMABIT;   // PMA is an address line
   
-  if(en & 0x1)          // if interrupts were enabled when calling this function, enable them
+  PMCONbits.ON = 1;        // enable the PMP peripheral
+  // perform the initialization sequence
+  LCD_Function(1,0);       // 2 line mode, small font
+  LCD_Display(1, 0, 0);    // Display control: display on, cursor off, blinking cursor off
+  LCD_Clear();             // clear the LCD 
+  LCD_Entry(1, 0);         // Cursor moves left to right. do not shift the display
+  
+  if(en & 0x1)             // if interrupts were enabled before, re-enable them
   {
     __builtin_enable_interrupts();
   }
 }
 
-// Clears the display and return to the home position (0,0)
+// Clears the display and returns to the home position (0,0)
 void LCD_Clear(void) {
   LCD_Write(0,0x01); //clear the whole screen
 }
@@ -90,7 +88,7 @@ void LCD_Home(void) {
 }
 
 // Issue the LCD entry mode set command
-// This telss the LCD what to do after writing a character
+// This tells the LCD what to do after writing a character
 // id : 1 increment cursor, 0 decrement cursor
 // s : 1 shift display right, 0 don't shift display
 void LCD_Entry(int id, int s) {
@@ -169,7 +167,11 @@ void LCD_CustomChar(unsigned char val, const char * data) {
 // data : the byte to send
 void LCD_Write(int rs, unsigned char data) {
   waitLCD();           // wait for the LCD to be ready
-  PMADDRbits.CS1 = rs; // 0 for command, 1 for data
+  if(rs) { // 1 for data
+    PMADDRSET = 1 << PMABIT;
+  } else { // 0 for command
+    PMADDRCLR = 1 << PMABIT; 
+  }
   waitPMP();           // Wait for the PMP to be ready
   PMDIN = data;        // send the data
 }
@@ -177,8 +179,12 @@ void LCD_Write(int rs, unsigned char data) {
 // read data from the LCD.  
 // rs : the value of the RS signal 0 for instructions status, 1 for data
 unsigned char LCD_Read(int rs) {
-  volatile unsigned char val = 0; // volatile so the first read statement does not get optimized away
-  PMADDRbits.CS1 = rs;        // low to read command status, high to read data
+  volatile unsigned char val = 0; // volatile so 1st read doesn't get optimized away
+  if(rs) { // 1 to read data
+    PMADDRSET = 1 << PMABIT;
+  } else { // 0 to read command status
+    PMADDRCLR = 1 << PMABIT;
+  }
   // from the PIC32 reference manual, you must read twice to actually get the data
   waitPMP();                  // wait for the PMP to be ready
   val = PMDIN;
@@ -186,5 +192,3 @@ unsigned char LCD_Read(int rs) {
   val = PMDIN;
   return val;
 }
-
-
