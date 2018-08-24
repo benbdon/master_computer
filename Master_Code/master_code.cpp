@@ -276,15 +276,8 @@ int main(int argc, char* argv[])
 				printf("recv failed: %d\n", WSAGetLastError());
 
 			// =================================================================================================================
-			// Send command to PIC32 to trigger frame capture
+			// Send command to PIC32 to trigger frame capture & Generate drop
 			// =================================================================================================================
-			// TODO: Currently this is done by pressing a on/off button
-
-			// =======================================
-			//Start triggered acquisition & grabbing images from the buffer
-			//========================================
-			cout << "Pictures are taken" << endl;
-
 
 			// Prepare for frame acquisition here
 			overheadCam.AcquisitionStart.Execute();
@@ -294,12 +287,6 @@ int main(int argc, char* argv[])
 			// sets up free-running continuous acquisition.
 			overheadCam.StartGrabbing(c_countOfImagesToGrab);
 			printf("Basler Camera is armed and ready\n\r");
-
-			// =======================================
-			// Generate drop
-			// =======================================
-			cout << "Generate drop" << endl;
-
 
 			// =================================================================================================================
 			// Obtain frames from TrackCam using ExSync Trigger and store pointer to image in buf

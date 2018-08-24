@@ -3,7 +3,7 @@
 #include "LCD.h"
 
 
-#define MAX_MESSAGE_LENGTH 200
+#define MAX_MESSAGE_LENGTH 20
 
 
 // Master (c++ code) will be in charge of this program
@@ -148,7 +148,7 @@ void __ISR(_CHANGE_NOTICE_VECTOR, IPL3SOFT) CNISR(void) { // INT step 1
 		LCD_Clear();
 		LCD_Move(0,0);
 		sprintf(message, "Drops: %d", drop_counter);
-		NU32_WriteUART3(message);
+		LCD_WriteString(message);
 
 
 		
@@ -264,7 +264,7 @@ void __ISR(_EXTERNAL_2_VECTOR, IPL2SOFT) Ext2ISR(void) { // step 1: the ISR
 	while(counter<5000000) {
 		counter++;
 	}
-
+	
 	//+Vcc: set L1 to LOW, L2 to HIGH, PWMA to >0
 	OC1RS = 4000;
 	LATDbits.LATD2 = 0;
@@ -281,24 +281,26 @@ void __ISR(_EXTERNAL_2_VECTOR, IPL2SOFT) Ext2ISR(void) { // step 1: the ISR
 	LATDbits.LATD2 = 1;
 	LATDbits.LATD1 = 0;
 
-
 	// Increment drop counter
 	drop_counter++;
-
+	
 
 	// Create message for LCD
-	char message[50];
+	char message[MAX_MESSAGE_LENGTH];
 
 	// Display properties on LCD
 	LCD_Clear();
 	LCD_Move(0,0);
 	sprintf(message, "Drops: %d", drop_counter);
-	NU32_WriteUART3(message);  
-
-
+	LCD_WriteString(message);  
+	
+	counter = 0;
+	while (counter<5000000) {
+		counter++;
+	}
 
 	// Clear interrupt flag
-	IFS0CLR = 1 << 11;
+	IFS0bits.INT2IF = 0;
 }
 
 
@@ -317,38 +319,38 @@ int main(void) {
 	char message[MAX_MESSAGE_LENGTH];
 
 	// Local variables for determining and setting Timer interrupts based on FPS_Side
-	int Time1_Side = 0, N_Side = 0, PR_Side = 0, TCKPS_Side = 0;
+	//int Time1_Side = 0, N_Side = 0, PR_Side = 0, TCKPS_Side = 0;
 
 
 	// =============================================================================================
 	// Change Notification Digital Input Interrupt from PPOD
 	// =============================================================================================
-	CNPUEbits.CNPUE17 = 0;  						// CN17/RF4 input has no internal pull-up
+	//CNPUEbits.CNPUE17 = 0;  						// CN17/RF4 input has no internal pull-up
 
-	oldF = PORTF;           						// all pins of port F are inputs, by default
+	//oldF = PORTF;           						// all pins of port F are inputs, by default
 
-	__builtin_disable_interrupts(); 		// step 1: disable interrupts
-	CNCONbits.ON = 1;               		// step 2: configure peripheral: turn on CN
-	CNENbits.CNEN17 = 1; 								//         listen to CN17/RF4
-	IPC6bits.CNIP = 3;              		// step 3: set interrupt priority
-	IPC6bits.CNIS = 2;              		// step 4: set interrupt subpriority
-	IFS1bits.CNIF = 0;              		// step 5: clear the interrupt flag
-	IEC1bits.CNIE = 1;              		// step 6: enable the _CN interrupt
-	__builtin_enable_interrupts();  		// step 7: CPU enabled for mvec interrupts
+	//__builtin_disable_interrupts(); 		// step 1: disable interrupts
+	//CNCONbits.ON = 1;               		// step 2: configure peripheral: turn on CN
+	//CNENbits.CNEN17 = 1; 								//         listen to CN17/RF4
+	//IPC6bits.CNIP = 3;              		// step 3: set interrupt priority
+	//IPC6bits.CNIS = 2;              		// step 4: set interrupt subpriority
+	//IFS1bits.CNIF = 0;              		// step 5: clear the interrupt flag
+	//IEC1bits.CNIE = 1;              		// step 6: enable the _CN interrupt
+	//__builtin_enable_interrupts();  		// step 7: CPU enabled for mvec interrupts
 
 
 	// =============================================================================================
 	// USER Button Interrupt
 	// =============================================================================================
 	__builtin_disable_interrupts(); 	// step 2: disable interrupts
-	INTCONCLR = 0x1;               	 	// step 3: INT0 triggers on falling edge
-	IPC2CLR = 0x1F << 24;           	// step 4: clear the 5 pri and subpri bits
-	IPC2 |= 9 << 24;               	 	// step 4: set priority to 2, subpriority to 1
-	IFS0bits.INT2IF = 0;           	 	// step 5: clear the int flag, or IFS0CLR=1<<3
-	IEC0SET = 1 << 11;              	// step 6: enable INT0 by setting IEC0<3>
-  __builtin_enable_interrupts();  	// step 7: enable interrupts
+	INTCONbits.INT2EP = 0;              // step 3: INT2 triggers on falling edge
+	IPC2bits.INT2IP = 2;           		// step 4: interrupt priority to 2
+	IPC2bits.INT2IS = 1;               	// step 4: interrupt subpriority to 1
+	IFS0bits.INT2IF = 0;           	 	// step 5: clear the int flag
+	IEC0bits.INT2IE = 1;              	// step 6: enable INT2 by setting IEC0<11>
+	__builtin_enable_interrupts();  	// step 7: enable interrupts
 
-
+	
 	// =============================================================================================
 	// PWM and digital output for piezoelectric droplet generator
 	// =============================================================================================
@@ -365,7 +367,7 @@ int main(void) {
 	T3CONbits.ON = 1;        						// turn on Timer3
 	OC1CONbits.ON = 1;       						// turn on OC1
 
-	// Set A10/A2 to digital output pins
+	// Set D2/A2 to digital output pins
 	TRISDbits.TRISD2 = 0;							// RA10 is an output pin
 	TRISDbits.TRISD1 = 0;								// RA2 is an output pin
 													
@@ -375,18 +377,17 @@ int main(void) {
 	LATDbits.LATD1 = 0;
 
 
-
 	// =============================================================================================
-	// TrackCam ExSync Trigger - Side (A3), Top (A4)
+	// TrackCam ExSync Trigger - Side (B3), Top (B4)
 	// =============================================================================================
 
 	// Digital output pin
-	TRISBbits.TRISB3 = 0;
-	TRISBbits.TRISB4 = 0;
+	//TRISBbits.TRISB3 = 0;
+	//TRISBbits.TRISB4 = 0;
 
 	// Set to HIGH
-	LATBbits.LATB3 = 1;
-	LATBbits.LATB4 = 1;
+	//LATBbits.LATB3 = 1;
+	//LATBbits.LATB4 = 1;
 
 
 
@@ -394,11 +395,18 @@ int main(void) {
 	// Keep program running to look for command from master to start record procedure
 	// =============================================================================================
 	while(1) {
-
+		NU32_LED2 = !NU32_LED2; // toggle LED1
+		int j;
+		for (j = 0; j < 1000000; j++) { // number is 1 million
+			while (!PORTDbits.RD7) {
+				;   // Pin D7 is the USER switch, low (FALSE) if pressed.
+			}
+		}
+		/*
 		// Get message from computer
 		NU32_ReadUART3(message, MAX_MESSAGE_LENGTH);
 
-		//Serial message: [NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME]
+		Serial message: [NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME]
 		sscanf(message, "%d%*c %d%*c %d%*c %d%*c %f", &NUMIMAGES_Side, &FPS_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME);		//%*c reads in comma and ignores it
 
 
@@ -428,9 +436,9 @@ int main(void) {
 			TCKPS_Side = 4;
 		} else if( N_Side <= 32 ) {
 			N_Side = 32;
-			TCKPS_Side = 5;
+		TCKPS_Side = 5;
 		} else if( N_Side <= 64 ) {
-			N_Side = 64;
+		N_Side = 64;
 			TCKPS_Side = 6;
 		} else {
 			N_Side = 256;
@@ -467,11 +475,12 @@ int main(void) {
 		LCD_Clear();
 		LCD_Move(0,0);
 		sprintf(message, "%d, %d, %d", FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE);
-		NU32_WriteUART3(message);                     	
+		LCD_WriteString(message);                     	
 
 		LCD_Move(1,0);
 		sprintf(message, "%d, %f", PULSETIME, DELAYTIME);
-		NU32_WriteUART3(message);
+		LCD_WriteString(message);
+		*/
 	}
 
 	return 0;

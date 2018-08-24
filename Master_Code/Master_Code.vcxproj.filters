@@ -27,6 +27,9 @@
     <ClCompile Include="master_code.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\AreaFreeRun_TrackCam_TestingFile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="comms.h">

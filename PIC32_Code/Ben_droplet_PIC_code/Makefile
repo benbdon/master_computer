@@ -1,8 +1,8 @@
 XC32PATH=C:/Program Files (x86)/Microchip/xc32/v2.10/bin
 HARMONYPATH=
-NU32PATH=C:/Users/droplet/NU32/Embedded_Computing_V1.2-Apr_2016/embedded_computing_code/01_Quickstart
-PORT=\\.\COM4
-TERMEMU=C:/PuTTY/putty.exe
+NU32PATH=C:/Users/droplet/NU32/01_Quickstart
+PORT=\COM4
+TERMEMU = C:/PuTTY/putty.exe
 
 #This file is used to:
 #	1. compile .c files into .o files
