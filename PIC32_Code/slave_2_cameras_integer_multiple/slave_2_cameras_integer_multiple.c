@@ -3,7 +3,7 @@
 #include "LCD.h"
 
 
-#define MAX_MESSAGE_LENGTH 20
+#define MAX_MESSAGE_LENGTH 200
 
 
 // Master (c++ code) will be in charge of this program
@@ -81,7 +81,7 @@ void __ISR(_CHANGE_NOTICE_VECTOR, IPL3SOFT) CNISR(void) { // INT step 1
 
 	// Save the current values for future use
   oldF = newF;
-
+  NU32_LED2 = !NU32_LED2; // toggle LED1
 
 	// =============================================================================================
 	// If RecordFlag is on, start the procedure of recording droplet bouncing
@@ -203,13 +203,13 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 				counter1++;
 			}
 
-			// Set A3/A4 to HIGH
+			// Set B3/B4 to HIGH
 			LATBbits.LATB3 = 1;
 			LATBbits.LATB4 = 1;
 		}
 		// If integer multiple of side-view camera, send ExSync signals to both camera
 		else if( (CurrentExSync_Side % INTEGER_MULTIPLE) == 0 ) {
-			// Set A3/A4 to LOW
+			// Set B3/B4 to LOW
 			LATBbits.LATB3 = 0;
 			LATBbits.LATB4 = 0;
 
@@ -319,24 +319,24 @@ int main(void) {
 	char message[MAX_MESSAGE_LENGTH];
 
 	// Local variables for determining and setting Timer interrupts based on FPS_Side
-	//int Time1_Side = 0, N_Side = 0, PR_Side = 0, TCKPS_Side = 0;
+	int Time1_Side = 0, N_Side = 0, PR_Side = 0, TCKPS_Side = 0;
 
 
 	// =============================================================================================
 	// Change Notification Digital Input Interrupt from PPOD
 	// =============================================================================================
-	//CNPUEbits.CNPUE17 = 0;  						// CN17/RF4 input has no internal pull-up
+	CNPUEbits.CNPUE17 = 0;  						// CN17/RF4 input has no internal pull-up
 
-	//oldF = PORTF;           						// all pins of port F are inputs, by default
+	oldF = PORTF;           						// all pins of port F are inputs, by default
 
 	//__builtin_disable_interrupts(); 		// step 1: disable interrupts
-	//CNCONbits.ON = 1;               		// step 2: configure peripheral: turn on CN
-	//CNENbits.CNEN17 = 1; 								//         listen to CN17/RF4
-	//IPC6bits.CNIP = 3;              		// step 3: set interrupt priority
-	//IPC6bits.CNIS = 2;              		// step 4: set interrupt subpriority
-	//IFS1bits.CNIF = 0;              		// step 5: clear the interrupt flag
-	//IEC1bits.CNIE = 1;              		// step 6: enable the _CN interrupt
-	//__builtin_enable_interrupts();  		// step 7: CPU enabled for mvec interrupts
+	CNCONbits.ON = 1;               		// step 2: configure peripheral: turn on CN
+	CNENbits.CNEN17 = 1; 								//         listen to CN17/RF4
+	IPC6bits.CNIP = 3;              		// step 3: set interrupt priority
+	IPC6bits.CNIS = 2;              		// step 4: set interrupt subpriority
+	IFS1bits.CNIF = 0;              		// step 5: clear the interrupt flag
+	IEC1bits.CNIE = 1;              		// step 6: enable the _CN interrupt
+	__builtin_enable_interrupts();  		// step 7: CPU enabled for mvec interrupts
 
 
 	// =============================================================================================
@@ -382,12 +382,12 @@ int main(void) {
 	// =============================================================================================
 
 	// Digital output pin
-	//TRISBbits.TRISB3 = 0;
-	//TRISBbits.TRISB4 = 0;
+	TRISBbits.TRISB3 = 0;
+	TRISBbits.TRISB4 = 0;
 
 	// Set to HIGH
-	//LATBbits.LATB3 = 1;
-	//LATBbits.LATB4 = 1;
+	LATBbits.LATB3 = 1;
+	LATBbits.LATB4 = 1;
 
 
 
@@ -395,28 +395,21 @@ int main(void) {
 	// Keep program running to look for command from master to start record procedure
 	// =============================================================================================
 	while(1) {
-		NU32_LED2 = !NU32_LED2; // toggle LED1
-		int j;
-		for (j = 0; j < 1000000; j++) { // number is 1 million
-			while (!PORTDbits.RD7) {
-				;   // Pin D7 is the USER switch, low (FALSE) if pressed.
-			}
-		}
-		/*
+		
 		// Get message from computer
 		NU32_ReadUART3(message, MAX_MESSAGE_LENGTH);
 
-		Serial message: [NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME]
+		//Serial message: [NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME]
 		sscanf(message, "%d%*c %d%*c %d%*c %d%*c %f", &NUMIMAGES_Side, &FPS_Side, &INTEGER_MULTIPLE, &PULSETIME, &DELAYTIME);		//%*c reads in comma and ignores it
 
-
+		
 		// -------------------------------------------------------------------------------------------
 		// Side Camera Interrupt -  NUMIMAGES_Side Hz - Timer2
 		// -------------------------------------------------------------------------------------------
 
 		// Calculate pre-scaler based on FPS_Side
-		Time1_Side = (((1.0/FPS_Side*1.0)*1e9)/12.5);
-		N_Side = ceil( (Time1_Side*1.0/65535.0) );
+		Time1_Side = (((1.0/FPS_Side*1.0)*1e9)/12.5); // Ticks per frame = 8e6/FPS_Side would save some rounding errors
+		N_Side = ceil( (Time1_Side*1.0/65535.0) ); 
 
 		// Select best pre-scaler of 1, 2, 4, 8, 16, 32, 64, or 256 
 		if( N_Side == 1 ) {
@@ -436,9 +429,9 @@ int main(void) {
 			TCKPS_Side = 4;
 		} else if( N_Side <= 32 ) {
 			N_Side = 32;
-		TCKPS_Side = 5;
+			TCKPS_Side = 5;
 		} else if( N_Side <= 64 ) {
-		N_Side = 64;
+			N_Side = 64;
 			TCKPS_Side = 6;
 		} else {
 			N_Side = 256;
@@ -467,9 +460,10 @@ int main(void) {
 
 
 		
-
+		
 		// Turn RecordFlag ON since we have received command from master
 		RecordFlag = 1;
+		
 
 		// Display properties on LCD
 		LCD_Clear();
@@ -480,7 +474,7 @@ int main(void) {
 		LCD_Move(1,0);
 		sprintf(message, "%d, %f", PULSETIME, DELAYTIME);
 		LCD_WriteString(message);
-		*/
+		
 	}
 
 	return 0;

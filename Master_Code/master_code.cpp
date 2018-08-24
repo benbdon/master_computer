@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 
 	try{
 		// =========================================================
-		// Initialization of Basler camera 
+		// Configure Basler camera 
 		// =========================================================
 		cout << "Initializing Basler Camera Settings" << endl;
 
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 		overheadCam.TriggerSelector.SetValue(TriggerSelector_FrameStart); // Select the frame start trigger
 		overheadCam.TriggerMode.SetValue(TriggerMode_On); // Set the mode for the selected trigger
 		overheadCam.TriggerSource.SetValue(TriggerSource_Line1); // Set the source for the selected trigger
-		overheadCam.TriggerActivation.SetValue(TriggerActivation_RisingEdge); 	// Set the trigger activation mode to rising edge
+		overheadCam.TriggerActivation.SetValue(TriggerActivation_FallingEdge); 	// Set the trigger activation mode to falling edge
 		overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth); // Set for the trigger width exposure mode
 		overheadCam.ExposureOverlapTimeMax.SetValue(1500); // Set the exposure overlap time max- the shortest exposure time // we plan to use is 1500 us
 		
@@ -241,8 +241,8 @@ int main(int argc, char* argv[])
 					current_test.VERT_ALPHA << " " <<
 					current_test.HORIZ_ALPHA_X << " " <<
 					current_test.HORIZ_ALPHA_Y;
-				cout << "IDENTIFIER, PHASE_OFFSET, VERT_AMPL, H_AMPL_X, H_AMPL_Y,"
-					"VERT_ALPHA, H_ALPHA X & Y" << endl;
+				cout << "IDENTIFIER, PHASE_OFFSET, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y,"
+					"VERT_ALPHA, HORIZ_ALPHA_X, HORIZ_ALPHA_Y" << endl;
 				cout << "MESSAGE FOR TCP: " << test_params_for_PPOD.str() << endl;
 				strcpy(sendbuf, test_params_for_PPOD.str().c_str());
 
@@ -275,9 +275,21 @@ int main(int argc, char* argv[])
 			else
 				printf("recv failed: %d\n", WSAGetLastError());
 
-			// =================================================================================================================
-			// Send command to PIC32 to trigger frame capture & Generate drop
-			// =================================================================================================================
+			// =============================================================================================================
+			// Send serial command to PIC for [NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME]
+			// =============================================================================================================
+			ostringstream test_params_for_PIC32;
+			char message[200];
+			test_params_for_PIC32 <<
+				current_test.NUMIMAGES_Side << " " <<
+				current_test.FPS_Side << " " <<
+				current_test.INTEGER_MULTIPLE << " " <<
+				current_test.PULSETIME << " " <<
+				current_test.DELAYTIME;
+			cout << "NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME" << endl;
+			cout << "Msg for PIC32: " << test_params_for_PIC32.str() << endl;
+			strcpy(message, test_params_for_PIC32.str().c_str());
+			WriteSerialPort(m_hSerialCommPIC, message);
 
 			// Prepare for frame acquisition here
 			overheadCam.AcquisitionStart.Execute();

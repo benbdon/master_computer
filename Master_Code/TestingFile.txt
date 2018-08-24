@@ -1,7 +1,9 @@
-# Set of testing parameters will take the form of either: (1) PPOD Saved Signal or (2) # PPOD 6 Equations
+# Set of testing parameters will take the form of either: (1) PPOD Saved Signal or (2) 
+# PPOD 6 Equations
 #
 # (1) PPOD Saved Signal
-# IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, # DELAYTIME, PPOD_RESET, Camera_Move, XPOS, YPOS, 
+# IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, INTEGER_MULTIPLE, PULSETIME, 
+# DELAYTIME, PPOD_RESET, Camera_Move, XPOS, YPOS, 
 #    -> S, 2, 26, 26, 26, 1, 900, 0.005, 1, -10, 10 1
 # (2) PPOD Equations
 # 1. IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, 
