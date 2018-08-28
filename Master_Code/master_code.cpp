@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 		cout << "Initializing Basler Camera Settings" << endl;
 
 		CBaslerUsbInstantCamera overheadCam(CTlFactory::GetInstance().CreateFirstDevice()); 		/// Create a USB instant camera object with the camera device found first.
-		static const uint32_t c_countOfImagesToGrab = 5; //Frames to grab per test 
+		static const uint32_t c_countOfImagesToGrab = 5; //Frames to grab per test //technically this should be calculated using test parameters FPS_Side,  
 
 		overheadCam.Open(); 	// Open camera
 		overheadCam.MaxNumBuffer = 15; // MaxNumBuffer can be used to control the size of buffers
@@ -83,8 +83,8 @@ int main(int argc, char* argv[])
 		overheadCam.TriggerMode.SetValue(TriggerMode_On); // Set the mode for the selected trigger
 		overheadCam.TriggerSource.SetValue(TriggerSource_Line1); // Set the source for the selected trigger
 		overheadCam.TriggerActivation.SetValue(TriggerActivation_FallingEdge); 	// Set the trigger activation mode to falling edge
-		overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth); // Set for the trigger width exposure mode
-		overheadCam.ExposureOverlapTimeMax.SetValue(1500); // Set the exposure overlap time max- the shortest exposure time // we plan to use is 1500 us
+		//overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth); // Set for the trigger width exposure mode
+		//overheadCam.ExposureOverlapTimeMax.SetValue(1500); // Set the exposure overlap time max- the shortest exposure time // we plan to use is 1500 us
 		
 		CGrabResultPtr ptrGrabResult; // This smart pointer will receive the grab result data
 		CImageFormatConverter formatConverter; // Creates a pylon Image FormatConverter object
@@ -172,11 +172,15 @@ int main(int argc, char* argv[])
 		int defX = -112;
 		int defY = -185;
 
-		//Home the gantry head
+		// Location to move DOD when camMove enabled
+		int camX = defX - 50;
+		int camY = defY + 60;
+
+		// Home the gantry head
 		printf("Setting home.\r\n");
 		Home(m_hSerialCommGRBL, GCODEmessage);
 
-		//Move gantry head to default location
+		// Move gantry head to default location
 		printf("Moving to default location.\r\n");
 		PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, defX, defY);
 		printf("\r\n\n============================home and default set =======================================\r\n\n");
@@ -280,17 +284,25 @@ int main(int argc, char* argv[])
 			// =============================================================================================================
 			ostringstream test_params_for_PIC32;
 			char message[200];
+			
+			cout << "NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME" << endl;
 			test_params_for_PIC32 <<
 				current_test.NUMIMAGES_Side << " " <<
 				current_test.FPS_Side << " " <<
 				current_test.INTEGER_MULTIPLE << " " <<
 				current_test.PULSETIME << " " <<
 				current_test.DELAYTIME;
-			cout << "NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME" << endl;
 			cout << "Msg for PIC32: " << test_params_for_PIC32.str() << endl;
 			strcpy(message, test_params_for_PIC32.str().c_str());
 			WriteSerialPort(m_hSerialCommPIC, message);
 
+			// =================================================================================================================
+			// Move DOD to out of the way of camera
+			// =================================================================================================================
+			if (current_test.CAM_MOVE) {
+				cout << "Moving DOD out of the way (" << camX << ", " << camY << ")" << endl;
+				PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, camX, camY);
+			}
 			// Prepare for frame acquisition here
 			overheadCam.AcquisitionStart.Execute();
 

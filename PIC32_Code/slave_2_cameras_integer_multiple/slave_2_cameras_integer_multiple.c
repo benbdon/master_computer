@@ -1,7 +1,8 @@
 //#define NU32_STANDALONE		// uncomment if program is standalone, not bootloaded
 #include "NU32.h"						// config bits, constants, funcs for startup and UART
 #include "LCD.h"
-
+#include <stdio.h>
+#include <math.h>
 
 #define MAX_MESSAGE_LENGTH 200
 
@@ -72,7 +73,7 @@ volatile int drop_counter = 0;
 
 
 // ***********************************************************************************************
-// ISR using Change Notification for synchronization with PPOD controller
+// ISR using Change Notification for synchronization with PPOD controller - 
 // ***********************************************************************************************
 void __ISR(_CHANGE_NOTICE_VECTOR, IPL3SOFT) CNISR(void) { // INT step 1
   
@@ -81,7 +82,6 @@ void __ISR(_CHANGE_NOTICE_VECTOR, IPL3SOFT) CNISR(void) { // INT step 1
 
 	// Save the current values for future use
   oldF = newF;
-  NU32_LED2 = !NU32_LED2; // toggle LED1
 
 	// =============================================================================================
 	// If RecordFlag is on, start the procedure of recording droplet bouncing
@@ -193,7 +193,7 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 
 		// Send ExSync signals to both cameras for the first frame
 		if( CurrentExSync_Side == 0 ) {
-			// Set A3/A4 to LOW
+			// Set B3/B4 to LOW
 			LATBbits.LATB3 = 0;
 			LATBbits.LATB4 = 0;
 
@@ -302,11 +302,6 @@ void __ISR(_EXTERNAL_2_VECTOR, IPL2SOFT) Ext2ISR(void) { // step 1: the ISR
 	// Clear interrupt flag
 	IFS0bits.INT2IF = 0;
 }
-
-
-
-
-
 
 
 int main(void) {
@@ -424,6 +419,7 @@ int main(void) {
 		} else if( N_Side <= 8 ) {
 			N_Side = 8;
 			TCKPS_Side = 3;
+
 		} else if( N_Side <= 16 ) {
 			N_Side = 16;
 			TCKPS_Side = 4;
@@ -440,13 +436,15 @@ int main(void) {
 
 		// Calculate period register based on selected prescaler
 		PR_Side = (Time1_Side / N_Side) - 1;
-
+		//LCD_Move(1, 0);
+		//sprintf(message, "%d", PR_Side);
+		//LCD_WriteString(message);
 
 
 		__builtin_disable_interrupts(); 	// INT step 2: disable interrupts at CPU
 
 											// INT step 3: 	setup TMR2 to call ISR at frequency of 5 kHz
-		PR2 = PR_Side;						// set period register to 16,000
+		PR2 = PR_Side;						// set period register
 		TMR2 = 0;							// initialize count to 0
 		T2CONbits.TCKPS = TCKPS_Side;		// 	set prescaler to 1:1
 		T2CONbits.ON = 1; 					// turn on Timer2
@@ -458,13 +456,9 @@ int main(void) {
 		__builtin_enable_interrupts(); 		// INT step 7: 	enable interrupts at CPU
 
 
-
-		
-		
 		// Turn RecordFlag ON since we have received command from master
 		RecordFlag = 1;
 		
-
 		// Display properties on LCD
 		LCD_Clear();
 		LCD_Move(0,0);
