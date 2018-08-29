@@ -39,7 +39,7 @@
 // L2 = Digital Output RD1
 // VM = 24V / 600mA
 //
-// CPU running at 40 MHz
+// CPU running at 40 MHz ? I thought it was 80 MHz
 //
 // FWD-SPD: L1 LOW, L2 HIGH
 // BCK-SPD: L1 HIGH, L2 LOW
@@ -96,7 +96,7 @@ void __ISR(_CHANGE_NOTICE_VECTOR, IPL3SOFT) CNISR(void) { // INT step 1
 		// Delay DELAYTIME seconds for phase relationship of droplet contacting bath
 		// -------------------------------------------------------------------------------------------
 		int counter1=0;
-		int delay = DELAYTIME*40000000;
+		int delay = DELAYTIME*40000000; //seems like it should be 80M, not 40M TODO - test this delay
 		while( counter1 < delay ) {
 			counter1++;
 		}
@@ -199,7 +199,7 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 
 			// Remain LOW for 100 clock cycles
 			int counter1 = 0;
-			while( counter1 < 100 ) {
+			while( counter1 < 1000 ) {
 				counter1++;
 			}
 
@@ -215,26 +215,26 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 
 			// Remain LOW for 100 clock cycles
 			int counter1 = 0;
-			while( counter1 < 100 ) {
+			while( counter1 < 1000 ) {
 				counter1++;
 			}
 
-			// Set A3/A4 to HIGH
+			// Set B3/B4 to HIGH
 			LATBbits.LATB3 = 1;
 			LATBbits.LATB4 = 1;
 		}
 		// If not integer multiple of side-view camera, send ExSync signals to side-view camera only
 		else {
-			// Set A3 to LOW
+			// Set B3 to LOW
 			LATBbits.LATB3 = 0;
 
 			// Remain LOW for 100 clock cycles
 			int counter1 = 0;
-			while( counter1 < 100 ) {
+			while( counter1 < 1000 ) {
 				counter1++;
 			}
 
-			// Set A3 to HIGH
+			// Set B3 to HIGH
 			LATBbits.LATB3 = 1;
 		}
 
@@ -272,7 +272,7 @@ void __ISR(_EXTERNAL_2_VECTOR, IPL2SOFT) Ext2ISR(void) { // step 1: the ISR
 
 	//Remain +Vcc for PULSETIME microseconds
 	int counter3=0;
-	while(counter3<(PULSETIME*40)) {
+	while(counter3<(PULSETIME*40)) { //Why 40? It works, so not changing it
 		counter3++;
 	}
 

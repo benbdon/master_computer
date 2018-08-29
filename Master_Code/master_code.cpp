@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 		cout << "Initializing Basler Camera Settings" << endl;
 
 		CBaslerUsbInstantCamera overheadCam(CTlFactory::GetInstance().CreateFirstDevice()); 		/// Create a USB instant camera object with the camera device found first.
-		static const uint32_t c_countOfImagesToGrab = 5; //Frames to grab per test //technically this should be calculated using test parameters FPS_Side,  
+		static const uint32_t c_countOfImagesToGrab = 10; //Frames to grab per test //technically this should be calculated using test parameters FPS_Side,  
 
 		overheadCam.Open(); 	// Open camera
 		overheadCam.MaxNumBuffer = 15; // MaxNumBuffer can be used to control the size of buffers
@@ -229,10 +229,10 @@ int main(int argc, char* argv[])
 			// =================================================================================================================
 			printf("Sending test parameters to PPOD (C)\n");
 			ostringstream test_params_for_PPOD;
-			int sendbuflen = 19;
-			char sendbuf[19];
-			int recvbuflen = 5;
-			char recvbuf[5];
+			const int sendbuflen = 19;
+			char sendbuf[sendbuflen];
+			const int recvbuflen = 5;
+			char recvbuf[recvbuflen];
 
 			// Create message to send
 			if (current_test.IDENTIFIER == 'E') {
@@ -325,11 +325,7 @@ int main(int argc, char* argv[])
 				// Image grabbed successfully?
 				if (ptrGrabResult->GrabSucceeded()) {
 					// Access the image data.
-					cout << "SizeX: " << ptrGrabResult->GetWidth() << endl;
-					cout << "SizeY: " << ptrGrabResult->GetHeight() << endl;			
-					//const uint8_t *pImageBuffer = (uint8_t *)ptrGrabResult->GetBuffer();
-					//cout << "Gray value of first pixel: " << (uint32_t)pImageBuffer[0] << endl << endl;
-					cout << "Image Acquired" << endl;
+					cout << "Image Acquired: " << grabbedImages << endl;
 					formatConverter.Convert(pylonImage, ptrGrabResult);
 					openCvImage = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *)pylonImage.GetBuffer());
 					ostringstream s; // Create the current image name for saving.
@@ -337,22 +333,15 @@ int main(int argc, char* argv[])
 					string imageName(s.str());
 					imwrite(imageName, openCvImage);
 					grabbedImages++;
-					/*#ifdef PYLON_WIN_BUILD
-						// Display the grabbed image.
-						Pylon::DisplayImage(1, ptrGrabResult);
-					#endif*/
 				}
 				else {
 					cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
 				}
 			}
+			cout << "Captured images: " << grabbedImages;
 			cout << "\r\n=============================finished iteration=============================\r\n" << endl;
 		}
 		// TODO: Create a shutdown TCP message that sends zeros or some unique character string that triggers the a shutdown on the PPOD
-		namedWindow("OpenCV Display Window", CV_WINDOW_NORMAL);
-		Mat image = imread("Image_0.jpg");
-		imshow("OpenCV Display Window", image); // Display current image in OpenCV display window
-		waitKey(0);
 
 		cout << "\r\n=============================done & shutting down=============================\r\n" << endl;
 		// =================================================================================================================
