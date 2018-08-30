@@ -65,34 +65,33 @@ int main(int argc, char* argv[])
 
 	try{
 		// =========================================================
-		// Configure Basler camera 
+		// Initialize Basler camera 
 		// =========================================================
 		cout << "Initializing Basler Camera Settings" << endl;
 
 		CBaslerUsbInstantCamera overheadCam(CTlFactory::GetInstance().CreateFirstDevice()); 		/// Create a USB instant camera object with the camera device found first.
-		static const uint32_t c_countOfImagesToGrab = 10; //Frames to grab per test //technically this should be calculated using test parameters FPS_Side,  
+		CGrabResultPtr ptrGrabResult; // This smart pointer will receive the grab result data
+		CImageFormatConverter formatConverter; // Creates a pylon Image FormatConverter object
+		formatConverter.OutputPixelFormat = PixelType_BGR8packed; // Specify the output pixel format
+		CPylonImage pylonImage; // Create a Pylon Image that will be used to create OpenCV images later 
+		Mat openCvImage; // Create an OpenCV image
+		static const uint32_t c_countOfImagesToGrab = 10; //Frames to grab per test //TODO: technically this should be calculated using test parameters FPS_Side,  
+		int grabbedImages = 0;
 
 		overheadCam.Open(); 	// Open camera
 		overheadCam.MaxNumBuffer = 15; // MaxNumBuffer can be used to control the size of buffers
 		overheadCam.AcquisitionMode.SetValue(AcquisitionMode_Continuous); // Set the acquisition mode to continuous frame
-		overheadCam.TriggerMode.SetValue(TriggerMode_Off); // Set the mode for the selected trigger
+		overheadCam.TriggerMode.SetValue(TriggerMode_Off); // Set the mode for the selected trigger 
 		overheadCam.AcquisitionFrameRateEnable.SetValue(false); // Disable the acquisition frame rate parameter (this will disable the camera’s 
 																// internal frame rate control and allow you to control the frame rate with 
 																// external frame start trigger signals)
 		overheadCam.TriggerSelector.SetValue(TriggerSelector_FrameStart); // Select the frame start trigger
 		overheadCam.TriggerMode.SetValue(TriggerMode_On); // Set the mode for the selected trigger
-		overheadCam.TriggerSource.SetValue(TriggerSource_Line1); // Set the source for the selected trigger
-		overheadCam.TriggerActivation.SetValue(TriggerActivation_FallingEdge); 	// Set the trigger activation mode to falling edge
+		overheadCam.TriggerSource.SetValue(TriggerSource_Line1); // Set the source for the selected trigger ie Opto-isolated IN (Line1)
+		overheadCam.TriggerActivation.SetValue(TriggerActivation_FallingEdge); 	// Set the trigger activation mode to falling edge ie this was determined by the PIC code that chose to trigger as a drop in voltage
 		//overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth); // Set for the trigger width exposure mode
-		//overheadCam.ExposureOverlapTimeMax.SetValue(1500); // Set the exposure overlap time max- the shortest exposure time // we plan to use is 1500 us
-		
-		CGrabResultPtr ptrGrabResult; // This smart pointer will receive the grab result data
-		CImageFormatConverter formatConverter; // Creates a pylon Image FormatConverter object
-		formatConverter.OutputPixelFormat = PixelType_BGR8packed; // Specify the output pixel format
-		CPylonImage pylonImage; // Create a Pylon Image that will be used to create OpenCV images later 
-		int grabbedImages = 0;
-		Mat openCvImage; // Create an OpenCV image
-
+		//overheadCam.ExposureOverlapTimeMax.SetValue(87000); // Set the exposure overlap time max- the shortest exposure time
+		overheadCam.AcquisitionStart.Execute(); 		// Prepare for frame acquisition here
 		printf("\r\n\n============Cam settings initialized=============================\r\n\n");
 
 		// =====================================================================================================================
@@ -104,18 +103,18 @@ int main(int argc, char* argv[])
 		printf("\r\n\n============Serial ports configured==============================\r\n\n");
 
 		// =====================================================================================================================
-		// Initialize Winsock, create Receiver/Sender socket
+		// Initialize Winsock, create Sender/Receiver socket
 		// =====================================================================================================================
 		printf("Connecting to PPOD server (C)\n");
 		int iResult; //return int from WSAStartup call
 
-		struct addrinfo *result = NULL, *ptr = NULL, hints; //Declare an addrinfo object that contains a sockaddr structure
+		struct addrinfo *result = NULL, *ptr = NULL, hints; // Declare an addrinfo object that contains a sockaddr structure
 															// and initialize these values. For this application, the Internet address family is unspecified so that either an 
 															// IPv6 or IPv4 address can be returned. The application requests the socket type to be a stream socket for the TCP 
 															// protocol.
 
 		// Initialize Winsock
-		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData); //MAKEWORD(2,2) parameter of WSAStartup makes a request for
+		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData); // MAKEWORD(2,2) parameter of WSAStartup makes a request for
 														// version 2.2 of Winsock on the system, and sets the passed version as the highest version of Windows Sockets support that the caller can use.
 		if (iResult != 0) {
 			printf("WSAStartup failed: %d\n", iResult);
@@ -160,7 +159,7 @@ int main(int argc, char* argv[])
 			WSACleanup();
 			return 1;
 		}
-		printf("\r\n\n=========================connected to server=====================================\r\n\n");
+		printf("\r\n\n=========================connected to PPOD server=====================================\r\n\n");
 
 		// =================================================================================================================
 		//Initialize gantry system
@@ -185,9 +184,7 @@ int main(int argc, char* argv[])
 		PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, defX, defY);
 		printf("\r\n\n============================home and default set =======================================\r\n\n");
 
-		// ====================================
 		// Validate contents of test file
-		// ===================================
 		cout << "Verifying provided test file." << endl;
 		int LinesInTextFile = file_verification(argv[1]);
 
@@ -195,7 +192,7 @@ int main(int argc, char* argv[])
 		// MAIN LOOP
 		// =============================================================================================================
 		cout << "\r\n=============================beginning main loop=============================\r\n" << endl;
-		string current_line;
+		string current_line; //declare a string to hold 1 line of the text file
 		Test_Variables current_test; // instance of class that stores and updates test parameters
 
 		for (int LinesRead = 0; LinesRead < LinesInTextFile; LinesRead++) { // Continue reading lines until have read the last line
@@ -213,7 +210,7 @@ int main(int argc, char* argv[])
 				cout << "Indentifier parameter must be either an 'E' or 'S'" << endl;
 				return 1;
 			}
-			// current_test.display_updated_parameters(current_line); //Dispay relevant test parameters
+			// current_test.display_updated_parameters(current_line); //Display relevant test parameters
 
 			// =================================================================================================================
 			// Move gantry head to specified location
@@ -225,7 +222,7 @@ int main(int argc, char* argv[])
 			PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, Xdrop, Ydrop);
 
 			// =================================================================================================================
-			// Send message to PPOD to adjust shaking parameters
+			// Send message to (C) PPOD Computer to adjust shaking parameters
 			// =================================================================================================================
 			printf("Sending test parameters to PPOD (C)\n");
 			ostringstream test_params_for_PPOD;
@@ -251,7 +248,7 @@ int main(int argc, char* argv[])
 				strcpy(sendbuf, test_params_for_PPOD.str().c_str());
 
 			}
-			else if (current_test.IDENTIFIER == 'S') {
+			else if (current_test.IDENTIFIER == 'S') { //Todo: Untested branch
 				test_params_for_PPOD << current_test.IDENTIFIER << " " <<
 					current_test.SAVEDSIGNAL;
 				cout << "IDENTIFIER, SAVEDSIGNAL" << endl;
@@ -296,65 +293,63 @@ int main(int argc, char* argv[])
 			strcpy(message, test_params_for_PIC32.str().c_str());
 			WriteSerialPort(m_hSerialCommPIC, message);
 
-			// =================================================================================================================
-			// Move DOD to out of the way of camera
-			// =================================================================================================================
-			if (current_test.CAM_MOVE) {
-				cout << "Moving DOD out of the way (" << camX << ", " << camY << ")" << endl;
-				PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, camX, camY);
-			}
-			// Prepare for frame acquisition here
-			overheadCam.AcquisitionStart.Execute();
-
 			// Start the grabbing of c_countOfImagesToGrab images.
 			// The camera device is parameterized with a default configuration which
 			// sets up free-running continuous acquisition.
 			overheadCam.StartGrabbing(c_countOfImagesToGrab);
-			printf("Basler Camera is armed and ready\n\r");
+			printf("Basler Camera is awaiting trigger signals\n\r");
 
 			// =================================================================================================================
 			// Obtain frames from TrackCam using ExSync Trigger and store pointer to image in buf
 			// =================================================================================================================
-			cout << "Triggering images" << endl;
+			int firstTimeThrough = true;
 
 			while (overheadCam.IsGrabbing())
 			{
 				// Wait for an image and then retrieve it. A timeout of 30,000 ms is used.
-				overheadCam.RetrieveResult(30000, ptrGrabResult, TimeoutHandling_ThrowException);
+				overheadCam.RetrieveResult(30000, ptrGrabResult, TimeoutHandling_ThrowException); //throws an error if 30 seconds goes by without a trigger TODO: may want to reduce this
 
-				// Image grabbed successfully?
+				// Save available images to disk
 				if (ptrGrabResult->GrabSucceeded()) {
-					// Access the image data.
 					cout << "Image Acquired: " << grabbedImages << endl;
 					formatConverter.Convert(pylonImage, ptrGrabResult);
 					openCvImage = Mat(ptrGrabResult->GetHeight(), ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t *)pylonImage.GetBuffer());
-					ostringstream s; // Create the current image name for saving.
+					ostringstream s; //  declare an output string to store the filename.
 					s << "Image_" << grabbedImages << ".jpg";
 					string imageName(s.str());
 					imwrite(imageName, openCvImage);
 					grabbedImages++;
+
+					// Move DOD out of the way of camera after the first image is captured
+					if (current_test.CAM_MOVE && firstTimeThrough) {
+						cout << "Moving DOD out of the way (" << camX << ", " << camY << ")" << endl;
+						PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, camX, camY);
+						firstTimeThrough = false;
+					}
 				}
 				else {
 					cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
 				}
 			}
-			cout << "Captured images: " << grabbedImages;
+
 			cout << "\r\n=============================finished iteration=============================\r\n" << endl;
 		}
-		// TODO: Create a shutdown TCP message that sends zeros or some unique character string that triggers the a shutdown on the PPOD
 
-		cout << "\r\n=============================done & shutting down=============================\r\n" << endl;
 		// =================================================================================================================
 		// Clean-up and shutdown
 		// =================================================================================================================
+		cout << "\r\n=============================done & shutting down=============================\r\n" << endl;
+		// TODO: Create a shutdown TCP message that sends zeros or some unique character string that triggers the a shutdown on the PPOD
 		cout << endl << "Close Pylon image viewer if open. Press Enter to exit." << endl;
 		while (cin.get() != '\n');
 	}
 	catch (const GenericException &e) {
 		// Error handling.
-		cerr << "An exception occurred." << endl
+		cerr << "An exception occurred. " << endl
 			<< e.GetDescription() << endl;
 		exitCode = 1;
+		cout << "exitCode: " << exitCode;
+		
 	}
 
 	myFile.close(); // close the txt file
