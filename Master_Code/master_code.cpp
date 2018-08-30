@@ -168,8 +168,8 @@ int main(int argc, char* argv[])
 		char GCODEmessage[150];
 
 		//Default DOD position
-		int defX = -112;
-		int defY = -185;
+		int defX = -131; //-112;
+		int defY = -140; // -185;
 
 		// Location to move DOD when camMove enabled
 		int camX = defX - 50;
@@ -219,7 +219,7 @@ int main(int argc, char* argv[])
 			int Ydrop = defY + current_test.YPOS;
 
 			cout << "Moving to (" << current_test.XPOS << ", " << current_test.YPOS << ")\r\n";
-			PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, Xdrop, Ydrop);
+			PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, Xdrop, Ydrop); // function is called PositionAbsolute, but inputs are relative position from default + default position
 
 			// =================================================================================================================
 			// Send message to (C) PPOD Computer to adjust shaking parameters
@@ -320,12 +320,14 @@ int main(int argc, char* argv[])
 					imwrite(imageName, openCvImage);
 					grabbedImages++;
 
+					
 					// Move DOD out of the way of camera after the first image is captured
 					if (current_test.CAM_MOVE && firstTimeThrough) {
 						cout << "Moving DOD out of the way (" << camX << ", " << camY << ")" << endl;
 						PositionAbsolute(m_hSerialCommGRBL, GCODEmessage, camX, camY);
 						firstTimeThrough = false;
 					}
+					
 				}
 				else {
 					cout << "Error: " << ptrGrabResult->GetErrorCode() << " " << ptrGrabResult->GetErrorDescription() << endl;
