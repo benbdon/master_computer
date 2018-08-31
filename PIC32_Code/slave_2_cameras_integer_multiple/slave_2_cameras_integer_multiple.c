@@ -197,7 +197,7 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 			LATBbits.LATB3 = 0;
 			LATBbits.LATB4 = 0;
 
-			// Remain LOW for 100 clock cycles
+			// Remain LOW for 1000 clock cycles
 			int counter1 = 0;
 			while( counter1 < 1000 ) {
 				counter1++;
@@ -213,7 +213,7 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 			LATBbits.LATB3 = 0;
 			LATBbits.LATB4 = 0;
 
-			// Remain LOW for 100 clock cycles
+			// Remain LOW for 1000 clock cycles
 			int counter1 = 0;
 			while( counter1 < 1000 ) {
 				counter1++;
@@ -228,7 +228,7 @@ void __ISR(_TIMER_2_VECTOR, IPL5SOFT) ExSyncSide(void) {
 			// Set B3 to LOW
 			LATBbits.LATB3 = 0;
 
-			// Remain LOW for 100 clock cycles
+			// Remain LOW for 1000 clock cycles
 			int counter1 = 0;
 			while( counter1 < 1000 ) {
 				counter1++;

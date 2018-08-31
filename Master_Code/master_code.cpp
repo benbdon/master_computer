@@ -46,7 +46,7 @@ using namespace cv; // Computer Vision functions
 #define ComPortGRBL     "COM3"         // Serial communication port for Arduino/GRBL
 
 // TCP/IP address & port
-//#define SERVERB   "129.105.69.220"  // server IP address (Machine B - Linux/Mikrotron) unused in this project, so far...
+#define SERVERB   "129.105.69.220"  // server IP address (Machine B - Linux/Mikrotron) unused in this project, so far...
 
 #define SERVERC   "129.105.69.174"  // server IP address (Machine C - PPOD)
 
@@ -58,7 +58,8 @@ int main(int argc, char* argv[])
 	int exitCode = 0;
 	PylonAutoInitTerm autoInitTerm; //Automatically opens and closes PylonInitialize()
 	WSADATA wsaData;
-	SOCKET ConnectSocket = INVALID_SOCKET; 	// Declare Socket
+	SOCKET ConnectSocket = INVALID_SOCKET; 	// Socket to (C) PPOD computer
+	SOCKET SocketToMachineB = INVALID_SOCKET; // Socket to (B) Linux computer
 	HANDLE m_hSerialCommPIC = { 0 }; // Declare handle for serial comms to PIC32
 	HANDLE m_hSerialCommGRBL = { 0 }; // Declare handle for serial comms to Arduino/GRBL
 	ifstream myFile(argv[1]); //instantiate input file stream object
@@ -75,7 +76,7 @@ int main(int argc, char* argv[])
 		formatConverter.OutputPixelFormat = PixelType_BGR8packed; // Specify the output pixel format
 		CPylonImage pylonImage; // Create a Pylon Image that will be used to create OpenCV images later 
 		Mat openCvImage; // Create an OpenCV image
-		static const uint32_t c_countOfImagesToGrab = 10; //Frames to grab per test //TODO: technically this should be calculated using test parameters FPS_Side,  
+		static const uint32_t c_countOfImagesToGrab = 10; //Frames to grab per test //TODO: technically this should be calculated using test parameters
 		int grabbedImages = 0;
 
 		overheadCam.Open(); 	// Open camera
@@ -89,10 +90,10 @@ int main(int argc, char* argv[])
 		overheadCam.TriggerMode.SetValue(TriggerMode_On); // Set the mode for the selected trigger
 		overheadCam.TriggerSource.SetValue(TriggerSource_Line1); // Set the source for the selected trigger ie Opto-isolated IN (Line1)
 		overheadCam.TriggerActivation.SetValue(TriggerActivation_FallingEdge); 	// Set the trigger activation mode to falling edge ie this was determined by the PIC code that chose to trigger as a drop in voltage
-		//overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth); // Set for the trigger width exposure mode
+		//overheadCam.ExposureMode.SetValue(ExposureMode_TriggerWidth); // Set for the trigger width exposure mode TODO: Find appropriate settings for this
 		//overheadCam.ExposureOverlapTimeMax.SetValue(87000); // Set the exposure overlap time max- the shortest exposure time
-		overheadCam.AcquisitionStart.Execute(); 		// Prepare for frame acquisition here
-		printf("\r\n\n============Cam settings initialized=============================\r\n\n");
+		overheadCam.AcquisitionStart.Execute(); // Execute an acquisition start command to prepare for frame acquisition
+		
 
 		// =====================================================================================================================
 		// Configuration of comms ports for PIC32 and GRBL
@@ -103,7 +104,7 @@ int main(int argc, char* argv[])
 		printf("\r\n\n============Serial ports configured==============================\r\n\n");
 
 		// =====================================================================================================================
-		// Initialize Winsock, create Sender/Receiver socket
+		// Initialize Winsock, create Sender/Receiver socket to PPOD Computer
 		// =====================================================================================================================
 		printf("Connecting to PPOD server (C)\n");
 		int iResult; //return int from WSAStartup call
@@ -160,6 +161,44 @@ int main(int argc, char* argv[])
 			return 1;
 		}
 		printf("\r\n\n=========================connected to PPOD server=====================================\r\n\n");
+		
+		/*
+		// ======================================================================================
+		// Create Sender/Receivere socket to Machine B - TCP communication
+		// ========================================================================
+		// Resolve the server address and port
+		iResult = getaddrinfo(SERVERB, DEFAULT_PORT, &hints, &result);
+		if (iResult != 0) {
+			printf("getaddrinfo failed: %d\n", iResult);
+			WSACleanup();
+			return 1;
+		}
+		ptr = result;
+
+		// Create a SOCKET for connecting to server
+		SocketToMachineB = socket(ptr->ai_family, ptr->ai_socktype,
+			ptr->ai_protocol);
+		if (SocketToMachineB == INVALID_SOCKET) { 	//Check for errors to ensure that the socket is a valid socket.
+			printf("Error at socket(): %ld\n", WSAGetLastError());
+			freeaddrinfo(result);
+			WSACleanup();
+			return 1;
+		}
+
+		// Connect to server.
+		iResult = connect(SocketToMachineB, ptr->ai_addr, (int)ptr->ai_addrlen);
+		if (iResult == SOCKET_ERROR) {
+			closesocket(SocketToMachineB);
+			SocketToMachineB = INVALID_SOCKET;
+		}
+
+		freeaddrinfo(result);
+		if (SocketToMachineB == INVALID_SOCKET) {
+			printf("Unable to connect to Machine B / Linux PC  server!\n");
+			WSACleanup();
+			return 1;
+		}
+		*/
 
 		// =================================================================================================================
 		//Initialize gantry system
@@ -198,7 +237,7 @@ int main(int argc, char* argv[])
 		for (int LinesRead = 0; LinesRead < LinesInTextFile; LinesRead++) { // Continue reading lines until have read the last line
 			getline(myFile, current_line);
 
-			if (current_line.front() == '#') { continue; } // skip lines that contain a # at the beginnging
+			if (current_line.front() == '#') { continue; } // skip lines in .txt that contain a "#" at the beginnging
 
 			replace(current_line.begin(), current_line.end(), ',', ' '); //replace the commas with spaces
 
@@ -275,7 +314,64 @@ int main(int argc, char* argv[])
 				printf("Connection closed\n");
 			else
 				printf("recv failed: %d\n", WSAGetLastError());
+			/*
+			// =================================================================================================================
+			// Send datagram to Machine B for current test parameters
+			// =================================================================================================================
 
+			printf("\nSending a TCP message to Machine B...Initialization...\n");
+			ostringstream test_params_for_MachineB;
+			const int sendbuflenB = 19;
+			char sendbufB[sendbuflen];
+			const int recvbuflenB = 5;
+			char recvbufB[recvbuflenB];
+
+			// Create message to send
+			if (current_test.IDENTIFIER == 'E') {
+				test_params_for_MachineB <<
+					current_test.IDENTIFIER << " " <<
+					current_test.FREQ << " " <<
+					current_test.VERT_AMPL << " " <<
+					current_test.HORIZ_AMPL_X << " " <<
+					current_test.HORIZ_AMPL_Y << " " <<
+					current_test.PHASE_OFFSET << " " <<
+					current_test.FPS_Side << " " <<
+					current_test.NUMIMAGES_Side << " " <<
+					current_test.PULSETIME << " " <<
+					current_test.DELAYTIME;
+				cout << "IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, PHASE_OFFSET,"
+					"FPS_Side, NUMIMAGES_Side, PULSETIME, DELAYTIME" << endl;
+				cout << "MESSAGE FOR TCP: " << test_params_for_MachineB.str() << endl;
+				strcpy(sendbuf, test_params_for_MachineB.str().c_str());
+
+			}
+			else if (current_test.IDENTIFIER == 'S') { //Todo: Untested branch
+				test_params_for_MachineB <<
+					current_test.IDENTIFIER << " " <<
+					current_test.SAVEDSIGNAL << " " <<
+					current_test.FREQ << " " <<
+					current_test.FPS_Side << " " <<
+					current_test.NUMIMAGES_Side << " " <<
+					current_test.PULSETIME << " " <<
+					current_test.DELAYTIME;
+
+				cout << "IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, PULSETIME, DELAYTIME" << endl;
+				cout << "MESSAGE FOR TCP: " << test_params_for_MachineB.str() << endl;
+				strcpy(sendbuf, test_params_for_MachineB.str().c_str());
+			}
+
+			// Send test parameters to Linux PC
+			iResult = send(SocketToMachineB, sendbufB, sendbuflenB, 0);
+			if (iResult == SOCKET_ERROR) {
+				printf("send to (B) Linux PC failed: %d\n", WSAGetLastError());
+				closesocket(SocketToMachineB);
+				WSACleanup();
+				return 1;
+			}
+			*/
+
+			overheadCam.StartGrabbing(c_countOfImagesToGrab); // Start the grabbing of c_countOfImagesToGrab images.
+			printf("\r\n\n============Basler Camera is awaiting trigger signals=============================\r\n\n");
 			// =============================================================================================================
 			// Send serial command to PIC for [NUMIMAGES_Side, FPS_Side, INTEGER_MULTIPLE, PULSETIME, DELAYTIME]
 			// =============================================================================================================
@@ -293,17 +389,14 @@ int main(int argc, char* argv[])
 			strcpy(message, test_params_for_PIC32.str().c_str());
 			WriteSerialPort(m_hSerialCommPIC, message);
 
-			// Start the grabbing of c_countOfImagesToGrab images.
-			// The camera device is parameterized with a default configuration which
-			// sets up free-running continuous acquisition.
-			overheadCam.StartGrabbing(c_countOfImagesToGrab);
-			printf("Basler Camera is awaiting trigger signals\n\r");
+
 
 			// =================================================================================================================
-			// Obtain frames from TrackCam using ExSync Trigger and store pointer to image in buf
+			// Obtain frames from Basler camera using Trigger from PIC32 
 			// =================================================================================================================
-			int firstTimeThrough = true;
-
+			int firstTimeThrough = true; // this variable is used to decided whether to move the DoD out of the way on a given test
+				// currently the command to start moving the DoD is issued right after the first image capture is grabbed on the Baslery/Top Cam
+	
 			while (overheadCam.IsGrabbing())
 			{
 				// Wait for an image and then retrieve it. A timeout of 30,000 ms is used.
@@ -358,6 +451,7 @@ int main(int argc, char* argv[])
 	CloseSerialPort(m_hSerialCommPIC); // Close PIC serial port
 	CloseSerialPortGRBL(m_hSerialCommGRBL); //Close grbl serial port
 	closesocket(ConnectSocket); // When the client application is completed using the Windows Sockets DLL
+	closesocket(SocketToMachineB);
 	WSACleanup(); // the WSACleanup function is called to release resources.
 
 	return 0;
