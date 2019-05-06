@@ -114,6 +114,16 @@
       <AdditionalLibraryDirectories>$(PYLON_DEV_DIR)\lib\Win32</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Program Files\Basler\pylon 5\Development\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);GCBase_MD_VC120_v3_0_Basler_pylon_v5_0.lib;GenApi_MD_VC120_v3_0_Basler_pylon_v5_0.lib;PylonBase_MD_VC120_v5_0.lib;PylonC_MD_VC120.lib;PylonGUI_MD_VC120_v5_0.lib;PylonUtility_MD_VC120_v5_0.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\Basler\pylon 5\Development\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalOptions>C:\Users\droplet\Desktop\opencv\build\x64\vc12\lib\*.lib %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

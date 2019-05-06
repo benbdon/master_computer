@@ -42,23 +42,28 @@ using namespace std; // C++ standard library
 using namespace cv; // Computer Vision functions
 
 // Serial ports
-#define ComPortPIC		"COM4"			// Serial communication port for PIC32
+#define ComPortPIC	 	"COM4"			// Serial communication port for PIC32
 #define ComPortGRBL     "COM3"         // Serial communication port for Arduino/GRBL
 
 // TCP/IP address & port
-#define SERVERB   "129.105.69.220"  // server IP address (Machine B - Linux/Mikrotron) unused in this project, so far...
+#define SERVERB   "129.105.69.121"  // server IP address (Machine B - Linux/Mikrotron) unused in this project, so far... 
 
-#define SERVERC   "129.105.69.174"  // server IP address (Machine C - PPOD)
+#define SERVERC   "129.105.69.186"  // server IP address (Machine C - PPOD)
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
+#define PORTB "8080"
+
+int NUM_TESTS = 0;
 
 int main(int argc, char* argv[])
 {
 	int exitCode = 0;
 	PylonAutoInitTerm autoInitTerm; //Automatically opens and closes PylonInitialize()
 	WSADATA wsaData;
-	SOCKET ConnectSocket = INVALID_SOCKET; 	// Socket to (C) PPOD computer
+	WSADATA wsaDataB;
+	SOCKET ConnectSocket = INVALID_SOCKET; 	
+	// Socket to (C) PPOD computer
 	SOCKET SocketToMachineB = INVALID_SOCKET; // Socket to (B) Linux computer
 	HANDLE m_hSerialCommPIC = { 0 }; // Declare handle for serial comms to PIC32
 	HANDLE m_hSerialCommGRBL = { 0 }; // Declare handle for serial comms to Arduino/GRBL
@@ -107,26 +112,31 @@ int main(int argc, char* argv[])
 		// Initialize Winsock, create Sender/Receiver socket to PPOD Computer
 		// =====================================================================================================================
 		printf("Connecting to PPOD server (C)\n");
-		int iResult; //return int from WSAStartup call
+		int iResult, iResultB; //return int from WSAStartup call
 
-		struct addrinfo *result = NULL, *ptr = NULL, hints; // Declare an addrinfo object that contains a sockaddr structure
+		struct addrinfo *result = NULL, *ptr = NULL, *resultB = NULL, *ptrB = NULL, hints, hintsB; // Declare an addrinfo object that contains a sockaddr structure
 															// and initialize these values. For this application, the Internet address family is unspecified so that either an 
 															// IPv6 or IPv4 address can be returned. The application requests the socket type to be a stream socket for the TCP 
 															// protocol.
-
+		
 		// Initialize Winsock
 		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData); // MAKEWORD(2,2) parameter of WSAStartup makes a request for
 														// version 2.2 of Winsock on the system, and sets the passed version as the highest version of Windows Sockets support that the caller can use.
+		iResultB = WSAStartup(MAKEWORD(2, 2), &wsaDataB);
 		if (iResult != 0) {
 			printf("WSAStartup failed: %d\n", iResult);
 			return 1;
 		}
-
+		
 		// After initialization, a SOCKET object must be instantiated for use by the client.
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = IPPROTO_TCP;
+		ZeroMemory(&hintsB, sizeof(hintsB));
+		hintsB.ai_family = AF_UNSPEC;
+		hintsB.ai_socktype = SOCK_STREAM;
+		hintsB.ai_protocol = IPPROTO_TCP;
 
 		// Resolve the server address and port
 		iResult = getaddrinfo(SERVERC, DEFAULT_PORT, &hints, &result);
@@ -162,43 +172,56 @@ int main(int argc, char* argv[])
 		}
 		printf("\r\n\n=========================connected to PPOD server=====================================\r\n\n");
 		
-		/*
+		
 		// ======================================================================================
 		// Create Sender/Receivere socket to Machine B - TCP communication
 		// ========================================================================
 		// Resolve the server address and port
-		iResult = getaddrinfo(SERVERB, DEFAULT_PORT, &hints, &result);
-		if (iResult != 0) {
-			printf("getaddrinfo failed: %d\n", iResult);
+		iResultB = getaddrinfo(SERVERB, PORTB, &hintsB, &resultB);
+		if (iResultB != 0) {
+			printf("getaddrinfo failed: %d\n", iResultB);
 			WSACleanup();
 			return 1;
 		}
-		ptr = result;
+		ptrB = resultB;
 
 		// Create a SOCKET for connecting to server
-		SocketToMachineB = socket(ptr->ai_family, ptr->ai_socktype,
-			ptr->ai_protocol);
+		SocketToMachineB = socket(ptrB->ai_family, ptrB->ai_socktype,
+			ptrB->ai_protocol);
 		if (SocketToMachineB == INVALID_SOCKET) { 	//Check for errors to ensure that the socket is a valid socket.
 			printf("Error at socket(): %ld\n", WSAGetLastError());
-			freeaddrinfo(result);
+			freeaddrinfo(resultB);
 			WSACleanup();
 			return 1;
 		}
 
 		// Connect to server.
-		iResult = connect(SocketToMachineB, ptr->ai_addr, (int)ptr->ai_addrlen);
-		if (iResult == SOCKET_ERROR) {
+		iResultB = connect(SocketToMachineB, ptrB->ai_addr, (int)ptrB->ai_addrlen);
+		if (iResultB == SOCKET_ERROR) {
 			closesocket(SocketToMachineB);
 			SocketToMachineB = INVALID_SOCKET;
 		}
 
-		freeaddrinfo(result);
+		freeaddrinfo(resultB);
 		if (SocketToMachineB == INVALID_SOCKET) {
 			printf("Unable to connect to Machine B / Linux PC  server!\n");
 			WSACleanup();
 			return 1;
 		}
-		*/
+		const int sendbuflen = 19;
+		char sendbuf[sendbuflen];
+		const int recvbuflen = 50;
+		char recvbuf[recvbuflen];
+		iResultB = recv(SocketToMachineB, recvbuf, recvbuflen, 0);
+		if (iResultB > 0) {
+			printf("Bytes received fr: %d\n", iResultB);
+		}
+		else if (iResultB == 0)
+			printf("Connection closed\n");
+		else
+			printf("recv failed: %d\n", WSAGetLastError());
+		
+		printf("\r\n\n=========================connected to Machine B server=====================================\r\n\n");
 
 		// =================================================================================================================
 		//Initialize gantry system
@@ -227,17 +250,42 @@ int main(int argc, char* argv[])
 		cout << "Verifying provided test file." << endl;
 		int LinesInTextFile = file_verification(argv[1]);
 
+		iResultB = recv(SocketToMachineB, recvbuf, recvbuflen, 0);
+		if (iResultB > 0) {
+			printf("Bytes received: %d\n", iResultB);
+			printf("%.*s: Linux PC is ready to receive params\n", iResultB, recvbuf);
+		}
+		else if (iResultB == 0)
+			printf("Connection closed\n");
+		else
+			printf("recv failed: %d\n", WSAGetLastError());
+
+		printf("%s", recvbuf); //This should print that Machine B is ready to receive the test parameters
+		sendbuf[0] = NUM_TESTS;
+		printf("number of tests to perform: %d", NUM_TESTS);
+		iResultB = send(SocketToMachineB, sendbuf, sendbuflen, 0);
+		if (iResultB == SOCKET_ERROR) {
+			printf("send failed: %d\n", WSAGetLastError());
+			closesocket(SocketToMachineB);
+			WSACleanup();
+			return 1;
+		}
+
 		// =============================================================================================================
 		// MAIN LOOP
 		// =============================================================================================================
 		cout << "\r\n=============================beginning main loop=============================\r\n" << endl;
 		string current_line; //declare a string to hold 1 line of the text file
 		Test_Variables current_test; // instance of class that stores and updates test parameters
+		printf("lines in text file: %d\n", LinesInTextFile);
 
 		for (int LinesRead = 0; LinesRead < LinesInTextFile; LinesRead++) { // Continue reading lines until have read the last line
 			getline(myFile, current_line);
-
-			if (current_line.front() == '#') { continue; } // skip lines in .txt that contain a "#" at the beginnging
+			printf("current test line is %d\n", LinesRead);
+			if (current_line.front() == '#') { 
+				printf("test was skipped due to first char\n");
+				continue; 
+			} // skip lines in .txt that contain a "#" at the beginnging
 
 			replace(current_line.begin(), current_line.end(), ',', ' '); //replace the commas with spaces
 
@@ -265,10 +313,7 @@ int main(int argc, char* argv[])
 			// =================================================================================================================
 			printf("Sending test parameters to PPOD (C)\n");
 			ostringstream test_params_for_PPOD;
-			const int sendbuflen = 19;
-			char sendbuf[sendbuflen];
-			const int recvbuflen = 5;
-			char recvbuf[recvbuflen];
+
 
 			// Create message to send
 			if (current_test.IDENTIFIER == 'E') {
@@ -314,16 +359,16 @@ int main(int argc, char* argv[])
 				printf("Connection closed\n");
 			else
 				printf("recv failed: %d\n", WSAGetLastError());
-			/*
+			
 			// =================================================================================================================
 			// Send datagram to Machine B for current test parameters
 			// =================================================================================================================
 
 			printf("\nSending a TCP message to Machine B...Initialization...\n");
 			ostringstream test_params_for_MachineB;
-			const int sendbuflenB = 19;
-			char sendbufB[sendbuflen];
-			const int recvbuflenB = 5;
+			const int sendbuflenB = 50;
+			char sendbufB[sendbuflenB];
+			const int recvbuflenB = 50;
 			char recvbufB[recvbuflenB];
 
 			// Create message to send
@@ -333,16 +378,16 @@ int main(int argc, char* argv[])
 					current_test.FREQ << " " <<
 					current_test.VERT_AMPL << " " <<
 					current_test.HORIZ_AMPL_X << " " <<
-					current_test.HORIZ_AMPL_Y << " " <<
+					//current_test.HORIZ_AMPL_Y << " " <<
 					current_test.PHASE_OFFSET << " " <<
 					current_test.FPS_Side << " " <<
 					current_test.NUMIMAGES_Side << " " <<
 					current_test.PULSETIME << " " <<
 					current_test.DELAYTIME;
-				cout << "IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, HORIZ_AMPL_Y, PHASE_OFFSET,"
+				cout << "IDENTIFIER, FREQ, VERT_AMPL, HORIZ_AMPL_X, PHASE_OFFSET," //should be a horiz_AMPL_Y in there maybe
 					"FPS_Side, NUMIMAGES_Side, PULSETIME, DELAYTIME" << endl;
 				cout << "MESSAGE FOR TCP: " << test_params_for_MachineB.str() << endl;
-				strcpy(sendbuf, test_params_for_MachineB.str().c_str());
+				strcpy(sendbufB, test_params_for_MachineB.str().c_str());
 
 			}
 			else if (current_test.IDENTIFIER == 'S') { //Todo: Untested branch
@@ -357,18 +402,28 @@ int main(int argc, char* argv[])
 
 				cout << "IDENTIFIER, SAVEDSIGNAL, FREQ, FPS_Side, NUMIMAGES_Side, PULSETIME, DELAYTIME" << endl;
 				cout << "MESSAGE FOR TCP: " << test_params_for_MachineB.str() << endl;
-				strcpy(sendbuf, test_params_for_MachineB.str().c_str());
+				strcpy(sendbufB, test_params_for_MachineB.str().c_str());
 			}
 
 			// Send test parameters to Linux PC
-			iResult = send(SocketToMachineB, sendbufB, sendbuflenB, 0);
-			if (iResult == SOCKET_ERROR) {
+			iResultB = send(SocketToMachineB, sendbufB, sendbuflenB, 0);
+			if (iResultB == SOCKET_ERROR) {
 				printf("send to (B) Linux PC failed: %d\n", WSAGetLastError());
 				closesocket(SocketToMachineB);
 				WSACleanup();
 				return 1;
 			}
-			*/
+			
+
+			iResultB = recv(SocketToMachineB, recvbufB, recvbuflenB, 0);
+			if (iResultB > 0) {
+				printf("Bytes received from Linux PC: %d\n", iResultB);
+			}
+			else if (iResultB == 0)
+				printf("Connection closed\n");
+			else
+				printf("recv failed: %d\n", WSAGetLastError());
+			printf("Linux PC ready to grab frames");
 
 			overheadCam.StartGrabbing(c_countOfImagesToGrab); // Start the grabbing of c_countOfImagesToGrab images.
 			printf("\r\n\n============Basler Camera is awaiting trigger signals=============================\r\n\n");
@@ -427,7 +482,9 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			//NEED SOMETHING HERE THAT CONFIRMS CAMERA B IS DONE TAKING PICTURES
 			cout << "\r\n=============================finished iteration=============================\r\n" << endl;
+
 		}
 
 		// =================================================================================================================

@@ -6,6 +6,7 @@
 #include "file_IO.h"
 using namespace std;
 
+//int NUM_TESTS = 0;
 // =================================================================================================================
 // Check last four characters of argv[1] to ensure if a .txt file was provided
 // =================================================================================================================
@@ -48,6 +49,7 @@ int file_verification(char* file_name) {
 
 		printf("  Lines in text file: %d\r\n", LinesInTextFile);
 		printf("  Number of tests to perform: %d\r\n", (LinesInTextFile - CommentsInTextFile));
+		NUM_TESTS = (LinesInTextFile - CommentsInTextFile);
 	}
 	return LinesInTextFile;
 }
